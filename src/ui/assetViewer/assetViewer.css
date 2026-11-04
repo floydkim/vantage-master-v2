@@ -1,0 +1,35 @@
+.asset-viewer {
+  display: grid;
+  grid-template-columns: 16rem 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  font-family: system-ui, sans-serif;
+}
+.asset-viewer aside {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.asset-viewer label {
+  margin-right: 1rem;
+}
+.asset-viewer canvas {
+  display: block;
+  margin: 0.5rem 0;
+  background: #333;
+  image-rendering: pixelated;
+}
+.asset-viewer pre {
+  font-size: 12px;
+  overflow-x: auto;
+}
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(16, 1.5rem);
+  gap: 2px;
+  padding: 0;
+  list-style: none;
+}
+.swatches li {
+  height: 1.5rem;
+}

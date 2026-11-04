@@ -1,0 +1,438 @@
+/* Win98 기본 배색(Windows Standard): 3D 면 #c0c0c0, 밝은 면 #fff·#dfdfdf, 그림자 #808080·#000, 활성 캡션 #000080 → #1084d0, 비활성 #808080 → #b5b5b5,
+   작업 영역(MDI 클라이언트) #808080, 바탕 화면 #008080. 글꼴은 아래 갈무리 픽셀 글꼴(원작 MS Sans Serif 비트맵 대신) */
+body:has(.w98-host) {
+  margin: 0; /* 기본 여백 8px이 100vh 위에 더해져 늘 스크롤이 생기지 않게 */
+}
+.w98-host {
+  min-height: 100vh;
+  background: #202020;
+  color: #ddd;
+  font: 13px system-ui, sans-serif;
+  padding: 8px;
+  box-sizing: border-box;
+}
+.w98-screen-bar {
+  margin-bottom: 6px;
+}
+/* 창 틀 글꼴: 갈무리(SIL OFL 1.1, fonts/galmuri-LICENSE.txt) 픽셀 글꼴. 원작은 MS Sans Serif 비트맵인데 브라우저에서는 벡터를 계단식으로
+   그려 영문·한글 모두 읽기 어려워 바꿨다(사용자 요청). 메뉴·대화 상자는 갈무리11 12px(대화 단위 기준은 그 평균 폭 8, dialogLayout.ts),
+   제목줄은 원작 굵은 8pt 크기에 가까운 갈무리9 10px */
+@font-face {
+  font-family: Galmuri11;
+  src: url('./fonts/Galmuri11.woff2') format('woff2');
+  font-display: swap; /* 받는 동안(각 약 0.5MB) 글을 숨기지 않고 대체 글꼴로 */
+}
+@font-face {
+  font-family: Galmuri9;
+  src: url('./fonts/Galmuri9.woff2') format('woff2');
+  font-display: swap;
+}
+.w98-screen {
+  position: relative;
+  overflow: hidden;
+  background: #008080;
+  color: #000;
+  font: 12px Galmuri11, 'MS Sans Serif', 'Microsoft Sans Serif', Tahoma, Geneva, Arial, sans-serif;
+  user-select: none;
+  -webkit-font-smoothing: none;
+}
+.w98-screen *,
+.w98-screen *::before,
+.w98-screen *::after {
+  box-sizing: border-box;
+}
+
+/* 창: 바깥 #dfdfdf/#000, 안쪽 #fff/#808080, 그 안 면 색 */
+.w98-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px #000, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff;
+}
+.w98-caption {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+  margin-bottom: 1px;
+  padding: 0 2px;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font: 10px Galmuri9, 'MS Sans Serif', 'Microsoft Sans Serif', Tahoma, sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.w98-caption.inactive {
+  background: linear-gradient(90deg, #808080, #b5b5b5);
+  color: #c0c0c0;
+}
+/* 모달 대화 상자·알림판(0x43b19a: 프레임이 주인인 WS_VISIBLE 팝업이라 활성이 된다)이 떠 있는 동안 프레임·MDI 자식 캡션은 비활성 색이다.
+   :has()를 모르는 브라우저가 위 규칙까지 버리지 않게 따로 둔다 */
+body:has(.battle-backdrop) .w98-window:not(.w98-dialog) > .w98-caption {
+  background: linear-gradient(90deg, #808080, #b5b5b5);
+  color: #c0c0c0;
+}
+.w98-caption .title {
+  flex: 1;
+  overflow: hidden;
+  white-space: pre;
+  text-overflow: clip;
+  padding-left: 1px;
+}
+.w98-caption img {
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
+}
+.w98-caption .buttons {
+  display: flex;
+  gap: 0;
+}
+.w98-caption .buttons .gap {
+  width: 2px;
+}
+.w98-button {
+  width: 16px;
+  height: 14px;
+  padding: 0;
+  border: none;
+  background: #c0c0c0 center no-repeat;
+  box-shadow: inset -1px -1px #000, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+}
+.w98-button:active {
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #000, inset -2px -2px #dfdfdf, inset 2px 2px #808080;
+  background-position: calc(50% + 1px) calc(50% + 1px);
+}
+.w98-button.close {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='7' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h2v1h1v1h2V1h1V0h2v1H7v1H6v1H5v1h1v1h1v1h1v1H6V6H5V5H3v1H2v1H0V6h1V5h1V4h1V3H2V2H1V1H0z'/%3E%3C/svg%3E");
+}
+.w98-button.minimize {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='2' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h6v2H0z'/%3E%3C/svg%3E");
+  background-position: calc(50% - 1px) calc(50% + 3px);
+}
+.w98-button.restore {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='9' shape-rendering='crispEdges'%3E%3Cpath fill='none' stroke='%23000' d='M2.5 1.5h5v5h-2M2.5 1v2M0.5 3.5h5v5h-5z'/%3E%3Cpath d='M2 0h6v2H2zM0 3h6v2H0z'/%3E%3C/svg%3E");
+}
+
+/* 메뉴바와 펼침 메뉴 */
+.w98-menubar {
+  flex: none;
+  display: flex;
+  height: 19px;
+  padding: 1px 0 0;
+}
+.w98-menubar > div {
+  position: relative;
+}
+.w98-menubar .item {
+  height: 17px;
+  padding: 0 6px;
+  line-height: 17px;
+}
+.w98-menubar .item.hover {
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #fff;
+}
+.w98-menubar .item.open {
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #808080;
+}
+.w98-menu {
+  position: absolute;
+  z-index: 100;
+  left: 0;
+  top: 18px;
+  min-width: 140px;
+  padding: 3px;
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px #000, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff;
+  white-space: nowrap;
+}
+.w98-menu .entry {
+  position: relative;
+  height: 17px;
+  padding: 0 20px;
+  line-height: 17px;
+}
+.w98-menu .entry.hl {
+  background: #000080;
+  color: #fff;
+}
+.w98-menu .entry.grayed {
+  color: #808080;
+  text-shadow: 1px 1px #fff;
+}
+.w98-menu .entry.grayed.hl {
+  text-shadow: none;
+}
+.w98-menu .entry.checked::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 5px;
+  width: 7px;
+  height: 7px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7' shape-rendering='crispEdges'%3E%3Cpath d='M6 0h1v3H6v1H5v1H4v1H3v1H2V6H1V5H0V2h1v1h1v1h1V3h1V2h1V1h1z'/%3E%3C/svg%3E");
+}
+
+/* MDI 클라이언트(작업 영역) */
+.w98-mdi {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: #808080;
+}
+.w98-client {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: #c0c0c0;
+}
+/* 스크롤 창(0x442d7e): 창이 내용 + 틀 크기면 막대를 숨기고(ShowScrollBar(SB_BOTH, FALSE)), 모자란 쪽만 보인다 */
+.w98-client.scroll {
+  overflow: auto;
+}
+/* 줄 안 캔버스의 글자 기준선 아래 틈(2px)이 내용을 키워 막대를 부르지 않게 */
+.w98-client canvas {
+  vertical-align: top;
+}
+
+/* 스크롤 막대(16px, 칸 무늬 홈과 입체 단추) */
+.w98-screen ::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+.w98-screen ::-webkit-scrollbar-track {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2' shape-rendering='crispEdges'%3E%3Cpath fill='%23fff' d='M0 0h1v1H0zM1 1h1v1H1z'/%3E%3Cpath fill='%23c0c0c0' d='M1 0h1v1H1zM0 1h1v1H0z'/%3E%3C/svg%3E");
+}
+.w98-screen ::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px #000, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff;
+}
+.w98-screen ::-webkit-scrollbar-button {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background: #c0c0c0 center no-repeat;
+  box-shadow: inset -1px -1px #000, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff;
+}
+.w98-screen ::-webkit-scrollbar-button:vertical:decrement {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4' shape-rendering='crispEdges'%3E%3Cpath d='M3 0h1v1h1v1h1v1h1v1H0V3h1V2h1V1h1z'/%3E%3C/svg%3E");
+}
+.w98-screen ::-webkit-scrollbar-button:vertical:increment {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h7v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E");
+}
+.w98-screen ::-webkit-scrollbar-button:horizontal:decrement {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='7' shape-rendering='crispEdges'%3E%3Cpath d='M3 0h1v7H3V6H2V5H1V4H0V3h1V2h1V1h1z'/%3E%3C/svg%3E");
+}
+.w98-screen ::-webkit-scrollbar-button:horizontal:increment {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='7' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1h1v1h1v1h1v1H3v1H2v1H1v1H0z'/%3E%3C/svg%3E");
+}
+.w98-screen ::-webkit-scrollbar-button:vertical:start:increment,
+.w98-screen ::-webkit-scrollbar-button:vertical:end:decrement,
+.w98-screen ::-webkit-scrollbar-button:horizontal:start:increment,
+.w98-screen ::-webkit-scrollbar-button:horizontal:end:decrement {
+  display: none;
+}
+.w98-screen ::-webkit-scrollbar-corner {
+  background: #c0c0c0;
+}
+
+/* 크기 조절 테두리 손잡이 */
+.w98-grip {
+  position: absolute;
+  z-index: 1;
+}
+
+/* 대화 상자(원작 MS Sans Serif 10pt, 리메이크 갈무리11 12px): 단추·라디오·체크·그룹 상자·목록·정적 글자 */
+.w98-dialog {
+  z-index: 200;
+}
+.w98-dialog-client {
+  position: relative;
+}
+.w98-dialog-client > * {
+  position: absolute;
+  margin: 0;
+  font: inherit;
+}
+.w98-push {
+  padding: 0;
+  border: none;
+  background: #c0c0c0;
+  color: #000;
+  box-shadow: inset -1px -1px #000, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+}
+.w98-push.default {
+  outline: 1px solid #000;
+  outline-offset: -1px;
+  box-shadow: inset -2px -2px #000, inset 2px 2px #fff, inset -3px -3px #808080, inset 3px 3px #dfdfdf;
+}
+.w98-push:active:not(:disabled) {
+  box-shadow: inset 1px 1px #000, inset -1px -1px #000, inset 2px 2px #808080;
+  padding: 2px 0 0 2px;
+}
+.w98-push:disabled,
+.w98-check.grayed {
+  color: #808080;
+  text-shadow: 1px 1px #fff;
+}
+.w98-check {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.w98-check .box,
+.w98-check .radio {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  background: #fff;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #000;
+}
+.w98-check .radio {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.w98-check .radio.on {
+  background: radial-gradient(circle, #000 0 2px, #fff 2.5px);
+}
+.w98-check .box.on {
+  background: #fff center no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7' shape-rendering='crispEdges'%3E%3Cpath d='M6 0h1v3H6v1H5v1H4v1H3v1H2V6H1V5H0V2h1v1h1v1h1V3h1V2h1V1h1z'/%3E%3C/svg%3E");
+}
+.w98-group {
+  pointer-events: none; /* 그룹 상자는 WM_NCHITTEST가 HTTRANSPARENT: 뒤(앞에 만든) 라디오가 클릭을 받는다 */
+}
+/* 테두리는 글자 높이의 절반(8px) 아래부터, 글자는 그 위 왼쪽에 바탕색으로 */
+.w98-group::before {
+  content: '';
+  position: absolute;
+  inset: 8px 0 0;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #808080, inset -2px -2px #808080, inset 2px 2px #fff;
+}
+.w98-group > span {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  background: #c0c0c0;
+  line-height: 16px;
+  white-space: pre; /* " Animation On/Off "의 앞뒤 공백 */
+}
+.w98-list,
+.w98-edit {
+  background: #fff;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #000;
+  padding: 2px 4px;
+  overflow: hidden;
+}
+.w98-edit {
+  border: none;
+  font: inherit;
+  color: #000;
+  outline: none;
+  white-space: pre;
+}
+.w98-edit.readonly {
+  background: #c0c0c0; /* 읽기 전용 편집 칸은 WM_CTLCOLORSTATIC: 3D 면 색 바탕 */
+}
+/* 한 줄 읽기 전용 칸(마스터 편집 수치 등)은 가운데에(원작은 왼쪽 위, 사용자 요청) */
+.w98-edit.readonly.single {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.w98-updown {
+  display: flex;
+  flex-direction: column;
+}
+.w98-updown > button {
+  flex: 1;
+  padding: 0;
+  border: none;
+  background: #c0c0c0 center no-repeat;
+  box-shadow: inset -1px -1px #000, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff;
+}
+.w98-updown > button:first-child {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='5' height='3' shape-rendering='crispEdges'%3E%3Cpath d='M2 0h1v1h1v1h1v1H0V2h1V1h1z'/%3E%3C/svg%3E");
+}
+.w98-updown > button:last-child {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='5' height='3' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h5v1H4v1H3v1H2V2H1V1H0z'/%3E%3C/svg%3E");
+}
+.w98-updown > button:active {
+  box-shadow: inset 1px 1px #808080, inset -1px -1px #808080;
+}
+.w98-list.scroll {
+  overflow-y: auto; /* WS_VSCROLL 목록 상자(LBS_DISABLENOSCROLL 없음)는 넘칠 때만 막대가 생긴다 */
+}
+.w98-list > div {
+  height: 16px;
+  line-height: 16px;
+  padding: 0 2px;
+  white-space: pre; /* 목록 상자는 공백을 줄이지 않는다(이어 하기 목록 줄의 %-12s 칸) */
+}
+.w98-list > .selected {
+  background: #000080;
+  color: #fff;
+}
+.w98-static {
+  white-space: pre;
+  line-height: 16px;
+}
+
+/* 바탕화면 실행 아이콘(LaunchIcon): 자리는 style(처음 왼쪽 위), 32 × 32 그림과 아래 흰 글자. 골라지면 그림에 파란 반투명(아이콘 모양 그대로)·글자 바탕 #000080,
+   초점이면 글자에 점선. 끄는 동안 반투명 그림자(.ghost), 아이콘 위 터치는 스크롤·확대 대신 끌기 */
+.w98-desktop-icon {
+  position: absolute;
+  width: 75px;
+  touch-action: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  font: inherit;
+  cursor: default;
+}
+.w98-desktop-icon:focus {
+  outline: none;
+}
+.w98-desktop-icon .pic {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+.w98-desktop-icon img {
+  display: block;
+  image-rendering: pixelated;
+}
+.w98-desktop-icon.selected .pic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #000080;
+  opacity: 0.5;
+  -webkit-mask: var(--icon) no-repeat;
+  mask: var(--icon) no-repeat;
+}
+.w98-desktop-icon .label {
+  padding: 0 2px;
+  text-align: center;
+  line-height: 1.25;
+  outline: 1px dotted transparent;
+}
+.w98-desktop-icon.selected .label {
+  background: #000080;
+}
+.w98-desktop-icon:focus .label {
+  outline-color: #fff;
+}
+.w98-desktop-icon.ghost {
+  opacity: 0.5;
+  pointer-events: none;
+}

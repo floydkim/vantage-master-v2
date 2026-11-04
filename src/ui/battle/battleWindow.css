@@ -1,0 +1,90 @@
+.battle-window {
+  position: absolute;
+  inset: 0;
+}
+.battle-info,
+.battle-window canvas {
+  display: block;
+  image-rendering: pixelated;
+}
+.battle-menu,
+.battle-unit-menu {
+  position: absolute;
+  z-index: 100; /* 원작 팝업(VANTAGEPOPUP)은 MDI 자식 창 위 */
+  image-rendering: pixelated;
+}
+.battle-unit-menu {
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  background: #223;
+  color: #ddd;
+  columns: 2;
+  font-size: 12px;
+}
+.battle-unit-menu li {
+  padding: 0.2rem 0.75rem;
+}
+.battle-unit-menu li.off {
+  color: #777;
+}
+.battle-unit-menu li.on {
+  cursor: pointer;
+}
+.battle-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 101;
+}
+.battle-dialog {
+  position: absolute;
+  z-index: 102;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 14rem;
+  padding: 0.75rem 1rem;
+  background: #ece9d8;
+  border: 1px solid #555;
+  font-size: 13px;
+}
+.battle-dialog h3 {
+  margin: 0 0 0.5rem;
+  font-size: 14px;
+}
+.battle-dialog ul {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+  max-height: 12rem;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #888;
+}
+.battle-dialog li {
+  padding: 0.1rem 0.4rem;
+  cursor: pointer;
+}
+.battle-dialog li.chosen {
+  background: #316ac5;
+  color: #fff;
+}
+.battle-dialog li span {
+  float: right;
+}
+.battle-dialog button {
+  margin-right: 0.5rem;
+}
+.battle-error {
+  background: #fdd;
+}
+.info-picture {
+  image-rendering: pixelated;
+}
+.notice-backdrop {
+  z-index: 103; /* 알림판 동안 프레임이 꺼진다(EnableWindow FALSE) */
+}
+.notice-board {
+  position: absolute;
+  z-index: 104;
+}

@@ -1,0 +1,101 @@
+/* 설치 마법사(Win98 설치 프로그램 모양): 가상 화면 가운데, 왼쪽 띠·오른쪽 내용·아래 단추 */
+.setup-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+}
+.setup.w98-window {
+  position: relative;
+  width: 460px;
+  padding: 3px;
+}
+.setup-body {
+  display: flex;
+  min-height: 230px;
+}
+.setup-side {
+  flex: none;
+  width: 80px;
+  background: linear-gradient(#000080, #1084d0);
+}
+.setup-main {
+  flex: 1;
+  padding: 10px 12px;
+  line-height: 1.45;
+}
+.setup-main h2 {
+  margin: 0 0 6px;
+  font: inherit;
+  font-weight: bold;
+}
+.setup-main p {
+  margin: 0 0 6px;
+}
+.setup-drop {
+  margin: 6px 0;
+  padding: 10px 6px;
+  background: #fff;
+  box-shadow: inset 1px 1px #808080, inset -1px -1px #fff, inset 2px 2px #000, inset -2px -2px #dfdfdf;
+  text-align: center;
+  color: #444;
+}
+.setup-drop.over {
+  background: #e8f0ff;
+}
+.setup-row {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0;
+}
+.setup .w98-push {
+  min-width: 75px;
+  height: 23px;
+  padding: 0 8px;
+}
+.setup-ok {
+  color: #060;
+}
+.setup-bad {
+  color: #a00;
+}
+.setup-dim {
+  color: #555;
+}
+.setup-notice {
+  margin-top: 8px;
+  padding: 4px 6px;
+  background: #fff;
+  box-shadow: inset 1px 1px #808080, inset -1px -1px #fff;
+  font-size: 11px;
+}
+.setup-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 6px 4px 4px;
+  border-top: 1px solid #808080;
+  box-shadow: 0 -1px #fff inset;
+}
+/* 제거: 1단계의 들어가기 줄, 항목 체크 상자(진짜 input은 보이지 않게 두고 모양은 .w98-check .box) */
+.setup-remove {
+  align-items: center;
+  margin-top: 8px;
+}
+.setup-part {
+  margin: 5px 0;
+  white-space: normal;
+}
+.setup-part input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.setup-part input:focus-visible + .box {
+  outline: 1px dotted #000;
+  outline-offset: 1px;
+}

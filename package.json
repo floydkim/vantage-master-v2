@@ -1,0 +1,33 @@
+{
+  "name": "vantage-master-v2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "typecheck": "tsc",
+    "fetch-original": "sh tools/fetch-original.sh",
+    "fetch-soundfont": "sh tools/fetch-soundfont.sh",
+    "import-cd-audio": "sh tools/import-cd-audio.sh",
+    "import-korean": "sh tools/import-korean.sh",
+    "publish-public": "sh tools/publish.sh",
+    "oracle-setup": "python3 -m venv --clear tools/.venv && tools/.venv/bin/pip install -q -r tools/oracle/requirements.txt",
+    "oracle-check": "sh tools/oracle/py.sh tools/oracle/selftest.py && sh tools/oracle/py.sh tools/oracle/check_state_map.py",
+    "oracle": "sh tools/oracle/run.sh"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "spessasynth_lib": "4.3.14"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
+  }
+}
