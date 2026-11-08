@@ -37,21 +37,22 @@ it('_inmm 목록: 줄 k → CD 트랙 k + 1(트랙 1은 데이터), CRLF·빈 �
   expect(inmmTracks('mp3\\01.mp3\r\nmp3\\02.mp3\r\n\r\n\r\n')).toEqual(new Map([[2, 'mp3/01.mp3'], [3, 'mp3/02.mp3']]));
 });
 
-const KO = ['Vmv2.exe', 'DATA00.DAT', 'DATA08.DAT', 'DATA09.DAT', 'DATA10.DAT'].map((n) => file(`KO/${n}`, `vm2/${n}`));
+const KO = ['Vmv2.exe', 'DATA00.DAT', 'DATA08.DAT', 'DATA09.DAT', 'DATA10.DAT', 'DATA13.DAT'].map((n) => file(`KO/${n}`, `vm2/${n}`));
 const list = (dir: string, first: number, ext: string) => Array.from({ length: 19 }, (_, k) => `${dir}\\${String(first + k).padStart(2, '0')}.${ext}`).join('\r\n') + '\r\n\r\n';
 
-it.skipIf(!has('KO/Vmv2.exe'))('한국어판: Vmv2.exe 해시·DAT 넷, 음악은 mp3 목록이 있으면 mp3, 없으면 bgm wav, 없으면 0곡', async () => {
+it.skipIf(!has('KO/Vmv2.exe'))('한국어판: Vmv2.exe 해시·DAT 다섯(DATA13 더빙 음성 포함), 음악은 mp3 목록이 있으면 mp3, 없으면 bgm wav, 없으면 0곡', async () => {
   const mp3 = [fake('vm2/mp3/_inmm.ini', list('mp3', 1, 'mp3')), ...Array.from({ length: 19 }, (_, k) => fake(`vm2/mp3/${String(k + 1).padStart(2, '0')}.mp3`))];
   const wav = [fake('vm2/_inmm.ini', list('bgm', 2, 'wav')), ...Array.from({ length: 19 }, (_, k) => fake(`vm2/bgm/${String(k + 2).padStart(2, '0')}.wav`))];
   const both = await collectKorean([...KO, ...mp3, ...wav]);
   if (!both.ok) throw new Error(both.reason);
-  expect([both.tracks, both.files.has('KO/Vmv2.exe'), await text(both.files.get('CDDA/TRACK02.mp3')), await text(both.files.get('CDDA/TRACK20.mp3'))]).toEqual([19, true, 'vm2/mp3/01.mp3', 'vm2/mp3/19.mp3']);
+  expect([both.tracks, both.files.has('KO/Vmv2.exe') && both.files.has('KO/DATA13.DAT'), await text(both.files.get('CDDA/TRACK02.mp3')), await text(both.files.get('CDDA/TRACK20.mp3'))]).toEqual([19, true, 'vm2/mp3/01.mp3', 'vm2/mp3/19.mp3']);
   const wavOnly = await collectKorean([...KO, ...wav]);
   expect(wavOnly.ok && [wavOnly.tracks, await text(wavOnly.files.get('CDDA/TRACK02.mp3'))]).toEqual([19, 'vm2/bgm/02.wav']);
   expect(await collectKorean(KO)).toMatchObject({ ok: true, tracks: 0 });
   const tracks = new Set([...both.files.keys()].flatMap((k) => (k.startsWith('CDDA/') ? [Number(k.slice(10, 12))] : [])));
   for (const t of readBgmTable(exe)) expect(t.cd === 0 || tracks.has(t.cd), `곡 표 CD 트랙 ${t.cd}`).toBe(true);
   expect(await collectKorean(KO.filter((p) => !p.path.endsWith('DATA09.DAT')))).toMatchObject({ ok: false, reason: expect.stringContaining('DATA09.DAT') });
+  expect(await collectKorean(KO.filter((p) => !p.path.endsWith('DATA13.DAT')))).toMatchObject({ ok: false, reason: expect.stringContaining('DATA13.DAT') });
   expect(await collectKorean([fake('vm2/Vmv2.exe', 'x'), ...KO.slice(1)])).toMatchObject({ ok: false, reason: expect.stringContaining('다른 판본') });
 });
 

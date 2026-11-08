@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { readDescriptions } from '../../formats/descriptions.ts';
 import { readDialog } from '../../formats/dialogs.ts';
 import { readMasterNames, readMasterTable } from '../../formats/masterTable.ts';
-import { hangulOn } from '../../i18n/hangul.ts';
+import { koreanLayout } from '../../i18n/hangul.ts';
 import { readMasterClassNames } from '../battle/continueData.ts';
 import type { Original } from '../battle/original.ts';
 import { Picture } from '../battle/Picture.tsx';
@@ -150,7 +150,7 @@ export function MasterEditDialog({
   return createPortal(
     <>
       <DialogBox dialog={t.edit} at={editing.at} metrics={WIN98} values={values} enabled={editing.name === null} onCommand={command}>
-        <Picture image={portrait} size={PORTRAIT_SIZE} rect={fitPicture(portraitRect(hangulOn()), PORTRAIT_SIZE)} colors={colors} />
+        <Picture image={portrait} size={PORTRAIT_SIZE} rect={fitPicture(portraitRect(koreanLayout()), PORTRAIT_SIZE)} colors={colors} />
       </DialogBox>
       {editing.name && <DialogBox dialog={t.name} at={editing.name.at} metrics={WIN98} values={{ texts: { [NAME_EDIT]: editing.name.text } }} onCommand={nameCommand} />}
     </>,

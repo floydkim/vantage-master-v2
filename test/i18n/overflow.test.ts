@@ -1,15 +1,18 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { masDescription } from '../../src/engine/scenario.ts';
 import { readDescriptions, readMapLabel } from '../../src/formats/descriptions.ts';
 import { type ExeImage, koreanExe, openExeImage } from '../../src/formats/exeImage.ts';
 import { loadMap } from '../../src/formats/mapData.ts';
 import { datFileName, openVmDat } from '../../src/formats/vmFiles.ts';
-import { setHangul } from '../../src/i18n/hangul.ts';
+import { htmlText, setHangul } from '../../src/i18n/hangul.ts';
+import { byteKey, ko as ours } from '../../src/i18n/ko.ts';
+import table from '../../src/i18n/ko.json';
+import { resourceIds } from '../../src/formats/resources.ts';
 import ko from '../../src/i18n/koStrings.json';
 import { HELP_W } from '../../src/ui/battle/helpWindow.ts';
 import { MENU_W, menuLabels } from '../../src/ui/battle/menu.ts';
-import { koreanRead } from '../../src/ui/battle/original.ts';
+import { fixedExe, fixedRead, koreanRead, textExe, textRead } from '../../src/ui/battle/original.ts';
 import { elapsedColumns } from '../../src/ui/battle/resultWindow.ts';
 import { reportElapsedColumns } from '../../src/ui/scene/engine.ts';
 import { MAP_INFO_W, mapDescription } from '../../src/ui/world/worldArt.ts';
@@ -30,15 +33,21 @@ const u32 = (x: ExeImage, va: number) => new DataView(x.read(va, 4).buffer).getU
 afterEach(() => setHangul(null));
 
 describe.skipIf(!koExe)('한국어판 글이 상자를 넘치지 않는다', () => {
-  it('도움말: 지형·네이티얼·마스터·마법 설명, 맵 설명, 적 마스터(MAS) 설명은 6줄 이하이고 줄마다 글 자리(x 0x7f)부터 도움창 폭(624) 안', () => {
-    const t = readDescriptions(k!);
+  it.each([
+    ['보정 끔', () => k!, () => r],
+    ['보정 켬', () => fixedExe(k!), () => fixedRead(r)],
+  ])('도움말(%s): 지형·네이티얼·마스터·마법 설명, 맵 설명, 적 마스터(MAS) 설명은 6줄 이하이고 줄마다 글 자리(x 0x7f)부터 도움창 폭(624) 안', (_, kx, rx) => {
+    const k = kx();
+    const r = rx();
+    const t = readDescriptions(k);
     const maps = Array.from({ length: 52 }, (_, i) => loadMap(exe, r, i));
     const texts = [
       ...t.terrain,
       ...t.natials,
       ...t.masters,
-      ...Array.from({ length: 6 }, (_, i) => k!.cString(u32(exe, 0x462314 + (10 + i) * 4))),
-      ...maps.map(mapDescription),
+      ...Array.from({ length: 6 }, (_, i) => k.cString(u32(exe, 0x462314 + (10 + i) * 4))),
+      ...maps.map((m) => mapDescription(m, false)),
+      ...maps.map((m) => mapDescription(m, true)), // 시나리오·Expert(0x424e78 +0x78)
       ...maps.map((m) => masDescription(r(m.header.enemyMasterId))),
     ];
     const wide = texts.filter((s) => {
@@ -82,5 +91,65 @@ describe.skipIf(!koExe)('한국어판 글이 상자를 넘치지 않는다', () 
     const light = [0x468c4c, ...[0, 1, 2].map((i) => u32(exe, 0x468b84 + i * 4))].map((va) => k!.cString(va));
     expect(light.filter((l) => 80 + l.length * 8 > MAP_INFO_W - 8)).toEqual([]);
     expect(Array.from({ length: 52 }, (_, i) => readMapLabel(k!, i)).filter((l) => 216 + l.length * 8 > MAP_INFO_W - 8)).toEqual([]);
+  });
+});
+
+// 우리 번역(한국어판 없이 한국어): 영문판 exe의 배치·코드(영문판 자리)에 번역 글. 표가 빈 종류는 영문 그대로라 영문판 기준으로 본다
+describe('우리 번역이 상자를 넘치지 않는다', () => {
+  const t = { exe: textExe(exe, ours.text, ours.ui), read: textRead(read, ours.text) };
+  beforeEach(() => setHangul(() => new Uint8Array(32), false));
+
+  it('도움말: 번역한 지형·네이티얼·마스터·마법 설명, 맵 설명 두 자리, 적 마스터 설명은 6줄 이하이고 줄마다 x 0x7f부터 도움창 폭 안(영문 그대로인 글은 원작 영문판부터 넘치는 것이 있어 보지 않음)', () => {
+    const texts = (x: { exe: ExeImage; read: typeof read }) => {
+      const d = readDescriptions(x.exe);
+      const maps = Array.from({ length: 52 }, (_, i) => loadMap(exe, x.read, i));
+      return [
+        ...d.terrain,
+        ...d.natials,
+        ...d.masters,
+        ...Array.from({ length: 6 }, (_, i) => x.exe.cString(u32(exe, 0x462314 + (10 + i) * 4))),
+        ...maps.map((m) => mapDescription(m, false)),
+        ...maps.map((m) => mapDescription(m, true)),
+        ...maps.map((m) => masDescription(x.read(m.header.enemyMasterId))),
+      ];
+    };
+    const english = texts({ exe, read });
+    const lines = (s: string) => s.replace(/\n$/, '').split('\n');
+    const wide = texts(t).filter((s, i) => s !== english[i] && (lines(s).length > 6 || lines(s).some((l) => 0x7f + l.replace(/\r$/, '').length * 8 > HELP_W)));
+    expect(wide.map(htmlText)).toEqual([]);
+  });
+
+  it('결과 창 소요 시간: 일·시 숫자는 번역 글(x 56)의 빈칸에, 분 글은 글 뒤에(영문판 자리)', () => {
+    const label = t.exe.cString(0x45f0fc);
+    const [days, hours, minutes] = elapsedColumns();
+    const blank = (at: number) => label.slice(Math.round((at - 56) / 8), Math.round((at + 16 - 56) / 8)).trim() === '';
+    expect([blank(days), blank(hours), minutes >= 56 + label.length * 8], htmlText(label)).toEqual([true, true, true]);
+  });
+
+  it.skipIf(!(byteKey(exe.cString(0x460360)) in table))('장면 보고서 소요 시간: 일(3자리)·시(2자리)는 번역 글(x 0x120)의 빈칸에, 분은 글 뒤에(영문판 자리 0x41c62f)', () => {
+    const label = t.exe.cString(0x460360);
+    const [days, hours, minutes] = reportElapsedColumns();
+    const blank = (at: number, n: number) => label.slice(Math.round((at - 0x120) / 8), Math.round((at + n * 8 - 0x120) / 8)).trim() === '';
+    expect([blank(days, 3), blank(hours, 2), minutes >= 0x120 + label.length * 8], htmlText(label)).toEqual([true, true, true]);
+  });
+
+  it('명령 메뉴 글은 메뉴 폭 안, 맵 정보의 밝기 글·맵 이름표는 창 폭 안', () => {
+    expect(menuLabels(t.exe).filter((l) => 15 + l.length * 8 > MENU_W).map(htmlText)).toEqual([]);
+    const light = [0x468c4c, ...[0, 1, 2].map((i) => u32(exe, 0x468b84 + i * 4))].map((va) => t.exe.cString(va));
+    expect(light.filter((l) => 80 + l.length * 8 > MAP_INFO_W - 8).map(htmlText)).toEqual([]);
+    expect(Array.from({ length: 52 }, (_, i) => readMapLabel(t.exe, i)).filter((l) => 216 + l.length * 8 > MAP_INFO_W - 8).map(htmlText)).toEqual([]);
+  });
+
+  it('대화 상자: 한글이 든 컨트롤 글의 어림 폭(한글 12px, 그 밖 7px, 체크·라디오·그룹 상자는 16px 뺌, 여러 줄 칸은 줄 수만큼)이 컨트롤 폭 안', () => {
+    const BOXED = new Set([2, 3, 4, 5, 6, 7, 9]);
+    const wide = resourceIds(exe, 5).flatMap((id) =>
+      dialogLayout(readDialog(t.exe, id), WIN98).controls.flatMap((c) => {
+        if (!c.text || !/[가-힣]/.test(c.text) || (c.className !== 0x80 && c.className !== 0x82)) return [];
+        const px = [...c.text.replaceAll('&', '')].reduce((n, ch) => n + (/[가-힣]/.test(ch) ? 12 : 7), 0);
+        const room = (c.rect.right - c.rect.left - (c.className === 0x80 && BOXED.has(c.style & 0xf) ? 16 : 0)) * Math.max(1, Math.floor((c.rect.bottom - c.rect.top) / 13));
+        return px > room ? [`0x${id.toString(16)}:${c.text}`] : [];
+      }),
+    );
+    expect(wide).toEqual([]);
   });
 });

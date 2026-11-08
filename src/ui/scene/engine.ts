@@ -8,13 +8,13 @@ import { formatC } from '../battle/statusWindow.ts';
 import { readActionNames } from '../../formats/actionTable.ts';
 import { readNatialTable } from '../../formats/natialTable.ts';
 import type { ExeImage } from '../../formats/exeImage.ts';
-import { hangulOn } from '../../i18n/hangul.ts';
+import { koreanLayout } from '../../i18n/hangul.ts';
 
 export const SCENE_W = 0x300;
 export const SCENE_H = 0x200;
 
 /** 보고서 쪽 0의 경과 일(3자리)·시(2자리)·분 글의 x(64줄, 0x41c62f). 한국어판은 그 판 글의 빈칸에 맞춰 옮겼다(0x41ce65·0x41cec9·0x41cf2b) */
-export const reportElapsedColumns = (): readonly [number, number, number] => (hangulOn() ? [0x168, 0x190, 0x1a8] : [0x177, 0x1c7, 0x1e2]);
+export const reportElapsedColumns = (): readonly [number, number, number] => (koreanLayout() ? [0x168, 0x190, 0x1a8] : [0x177, 0x1c7, 0x1e2]);
 export const SCENE_START = 0x34bc0; // 0x41becb: 가상 시계·글 시계·16ms 카운터
 const KINDS = 0x460168; // [종류 0~5] → DATA08
 const ENDINGS = 0x460180; // [마스터] → DATA09 ED
@@ -80,6 +80,29 @@ export function sceneScript(exe: ExeImage, kind: number, master: number, index: 
   return index === 0 ? u32(exe, ENDINGS + master * 4) : u32(exe, MORE_ENDINGS + index * 4);
 }
 
+/** vmv2.exe 0x0041f82a 글 객체의 글: 글 명령 바이트를 fix(오역 보정)로 고친 뒤 %M = 진영 0 이름, %% = %로 푼다. 2바이트 글자는 둘째 바이트까지 한 글자 */
+export function sceneText(raw: Uint8Array, name: string, fix: (s: string) => string): string {
+  const t = fix(String.fromCharCode(...raw));
+  let s = '';
+  for (let i = 0; i < t.length; ) {
+    const c = t.charCodeAt(i);
+    if (c === 0x25 && t[i + 1] === '%') {
+      s += '%';
+      i += 2;
+    } else if (c === 0x25 && t[i + 1] === 'M') {
+      s += name;
+      i += 2;
+    } else if (c >= 0x80 && i + 1 < t.length) {
+      s += t.slice(i, i + 2);
+      i += 2;
+    } else {
+      s += t[i];
+      i++;
+    }
+  }
+  return s;
+}
+
 export class SceneEngine {
   /** 0x483528: 종류 6의 ED 번호(0x1b 보고서) */
   index = 0;
@@ -92,6 +115,7 @@ export class SceneEngine {
   readonly flash = new Flash();
   private readonly exe: ExeImage;
   private readonly read: ReadAny;
+  private readonly fix: (s: string) => string; // 글 명령의 오역 보정(스크립트 바이트 길이는 그대로)
   private readonly kind: number;
   private readonly player: ScenePlayer;
   private readonly music: (track: number) => void;
@@ -115,9 +139,10 @@ export class SceneEngine {
   private recolor = false; // 0x48354c
 
   /** vmv2.exe 0x0041becb: base는 창 팔레트 0x4800e0의 지금 색(앞 장면이 남긴 색) */
-  constructor(original: { readonly exe: ExeImage; readonly read: ReadAny }, kind: number, player: ScenePlayer, base: Uint8Array, music: (track: number) => void = () => {}) {
+  constructor(original: { readonly exe: ExeImage; readonly read: ReadAny; readonly fix?: (s: string) => string }, kind: number, player: ScenePlayer, base: Uint8Array, music: (track: number) => void = () => {}) {
     this.exe = original.exe;
     this.read = original.read;
+    this.fix = original.fix ?? ((s) => s);
     this.kind = kind;
     this.player = { ...player, name: player.name.replace(/[\x00-\x1f]/g, ' ') }; // 제어 문자(손댄 세이브)는 빈칸. 원작은 글리프 표 앞을 읽어 그린다
     this.music = music;
@@ -1050,23 +1075,7 @@ export class SceneEngine {
 
   /** vmv2.exe 0x0041f82a: 글 객체. %M = 진영 0 이름, %% = %. 그림자 (1, 1) 색 10 → 본문 색 0xb, 높이 17 */
   private text(raw: Uint8Array): void {
-    let s = '';
-    for (let i = 0; i < raw.length; ) {
-      const c = raw[i];
-      if (c === 0x25 && raw[i + 1] === 0x25) {
-        s += '%';
-        i += 2;
-      } else if (c === 0x25 && raw[i + 1] === 0x4d) {
-        s += this.player.name;
-        i += 2;
-      } else if (c >= 0x80 && i + 1 < raw.length) {
-        s += String.fromCharCode(c, raw[i + 1]);
-        i += 2;
-      } else {
-        s += String.fromCharCode(c);
-        i++;
-      }
-    }
+    const s = sceneText(raw, this.player.name, this.fix);
     const o = this.alloc();
     const w = s.length * 8 + 4;
     o.pixels = new Uint8Array(w * 0x11).fill(0x10);

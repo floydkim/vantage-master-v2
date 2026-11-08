@@ -7,26 +7,29 @@ import neodgmUrl from './fonts/neodgm.woff2?url';
 /** 2바이트 글자(첫 바이트 << 8 | 둘째 바이트) → 16줄 × 2바이트 글리프(앞 비트가 왼쪽 픽셀), 그릴 글자가 아니면 null(빈칸) */
 export type WideGlyphs = (code: number) => Uint8Array | null;
 
-const cp949 = new TextDecoder('euc-kr'); // WHATWG euc-kr = windows-949(UHC 포함)
+const cp949Decoder = new TextDecoder('euc-kr'); // WHATWG euc-kr = windows-949(UHC 포함)
 let wide: WideGlyphs | null = null;
 let korean = false;
+let layout = false;
 
-/** 한국어: CP949 글리프와 한국어 모드 */
-export function setHangul(glyphs: WideGlyphs | null): void {
+/** 한국어: CP949 글리프와 한국어 모드. layout은 한국어판 exe의 그리기 자리(우리 번역은 영문판 exe라 false) */
+export function setHangul(glyphs: WideGlyphs | null, koreanExeLayout = glyphs !== null): void {
   wide = glyphs;
   korean = glyphs !== null;
+  layout = korean && koreanExeLayout;
 }
 
 /** 원문: 글리프만(HTML 글·편집 칸·자리는 그대로) */
 export function setWideGlyphs(glyphs: WideGlyphs | null): void {
   wide = glyphs;
   korean = false;
+  layout = false;
 }
 
 export const wideGlyph = (code: number): Uint8Array | null => wide?.(code) ?? null;
 
-/** 한국어 원본을 읽었는가(한국어판이 그리기 자리를 바꾼 곳에서 쓴다) */
-export const hangulOn = (): boolean => korean;
+/** 한국어판 exe로 읽었는가(한국어판이 그리기 자리를 바꾼 곳에서 쓴다) */
+export const koreanLayout = (): boolean => layout;
 
 /** 2바이트 글자를 디코더로 푼 한 글자. 한 글자로 풀리지 않거나 U+FFFD면 null(영문판의 \xa1\xa1·\xa1\xa4는 Shift-JIS로 반각 두 글자라 빈칸) */
 export function wideChar(decoder: TextDecoder, code: number): string | null {
@@ -39,18 +42,22 @@ export function wideChar(decoder: TextDecoder, code: number): string | null {
  * 리소스 글 가운데 Latin-1 기호만 든 것(예: 메뉴 0x66의 '×1/2')은 바이트 문자열로 잘못 보므로 넣지 않는다. 한국어판 대화 상자 30개에는 그런 글이 없고 메뉴는 거치지 않는다
  */
 export function htmlText(s: string): string {
-  return korean && /[\x80-\xff]/.test(s) && !/[^\x00-\xff]/.test(s) ? cp949.decode(Uint8Array.from(s, (c) => c.charCodeAt(0))) : s;
+  return korean && /[\x80-\xff]/.test(s) && !/[^\x00-\xff]/.test(s) ? cp949Decoder.decode(Uint8Array.from(s, (c) => c.charCodeAt(0))) : s;
 }
 
 let encoder: Map<string, string> | null = null;
-/** HTML에서 친 글을 바이트 문자열로: 한국어면 CP949로 바꾸고 못 바꾸는 글자는 뺀다. 표는 처음 쓸 때 2바이트 글자를 모두 풀어 만든다 */
+/** HTML에서 친 글을 바이트 문자열로: 한국어면 CP949로 바꾸고 못 바꾸는 글자는 뺀다 */
 export function byteText(s: string): string {
-  if (!korean || !/[^\x00-\x7f]/.test(s)) return s;
+  return !korean || !/[^\x00-\x7f]/.test(s) ? s : cp949(s);
+}
+
+/** 유니코드 → CP949 바이트 문자열(글자 = 바이트), 못 바꾸는 글자는 뺀다. 표는 처음 쓸 때 2바이트 글자를 모두 풀어 만든다 */
+export function cp949(s: string): string {
   if (!encoder) {
     encoder = new Map();
     for (let a = 0x81; a <= 0xfe; a++) {
       for (let b = 0x41; b <= 0xfe; b++) {
-        const c = cp949.decode(Uint8Array.of(a, b));
+        const c = cp949Decoder.decode(Uint8Array.of(a, b));
         if (c.length === 1 && c !== '\ufffd' && !encoder.has(c)) encoder.set(c, String.fromCharCode(a, b));
       }
     }

@@ -10,6 +10,7 @@ import { datFileName, openVmDat } from '../../src/formats/vmFiles.ts';
 import ko from '../../src/i18n/koStrings.json';
 import { fetchBytes } from '../../src/ui/assetViewer/loadDat.ts';
 import { koreanImage, koreanRead } from '../../src/ui/battle/original.ts';
+import { wavBytes } from '../../src/ui/battle/sound.ts';
 import { mapDescription } from '../../src/ui/world/worldArt.ts';
 import { exe, read } from '../ui/screenCases.ts';
 import { browserLatin1 } from './browserDecoder.ts';
@@ -63,7 +64,7 @@ describe.skipIf(!koExe)('한국어 원본 읽기', () => {
     const raw = (m: Uint8Array) => m.subarray(0, m.indexOf(0)).join();
     const wrong = Array.from({ length: 52 }, (_, i) => i).filter((i) => {
       const m = loadMap(exe, r, i);
-      return bytes(m.header.name).join() !== raw(m.struct) || bytes(mapDescription(m)).join() !== raw(m.struct.subarray(0x1a0));
+      return bytes(m.header.name).join() !== raw(m.struct) || bytes(mapDescription(m, false)).join() !== raw(m.struct.subarray(0x1a0));
     });
     expect(wrong).toEqual([]);
   });
@@ -91,6 +92,13 @@ describe.skipIf(!koExe)('한국어 원본 읽기', () => {
   });
 });
 
+const koSounds = existsSync(new URL('DATA13.DAT', KO)) ? openVmDat(13, new Uint8Array(readFileSync(new URL('DATA13.DAT', KO)))) : null;
+
+it.skipIf(!koSounds)('한국어판 DATA13: 154개를 WAV 길이로 자르면 140개는 영문판과 같고 14개가 한국어 더빙', () => {
+  const differ = Array.from({ length: koSounds!.entryCount }, (_, i) => i).filter((i) => Buffer.compare(wavBytes(koSounds!.read(i)), read((13 << 16) | i)) !== 0);
+  expect([koSounds!.entryCount, differ]).toEqual([154, [4, 28, 29, 30, 92, 95, 97, 98, 105, 114, 118, 120, 129, 146]]);
+});
+
 it('원본을 못 받으면 오류가 받는 방법을 알린다: 영문판 pnpm fetch-original, 한국어판 pnpm import-korean', async () => {
   vi.stubGlobal('fetch', async () => new Response(null, { status: 404 }));
   await expect(fetchBytes('vmv2.exe')).rejects.toThrow('pnpm fetch-original');
@@ -108,5 +116,5 @@ it('맵 이름·설명은 바이트 그대로 푼다 — 브라우저 TextDecode
   };
   browserLatin1();
   const m = loadMap(exe, r, 0);
-  expect([[...bytes(m.header.name)], [...bytes(mapDescription(m))]]).toEqual([[0xb0, 0x81, 0x9f, 0x80], [0xc7, 0x8f, 0x41]]);
+  expect([[...bytes(m.header.name)], [...bytes(mapDescription(m, false))]]).toEqual([[0xb0, 0x81, 0x9f, 0x80], [0xc7, 0x8f, 0x41]]);
 });

@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import type { VmDat } from '../../src/formats/vmFiles.ts';
-import { type Player, Sound, webPlayer } from '../../src/ui/battle/sound.ts';
+import { type Player, Sound, wavBytes, webPlayer } from '../../src/ui/battle/sound.ts';
 import { exe } from './screenCases.ts';
 
 // 가짜 재생기: 소리는 end()를 부를 때까지 울린다(SND_NOSTOP 판정)
@@ -95,4 +95,20 @@ it('재생기는 DATA13마다 하나만 만들고(AudioContext를 판마다 새�
   const silent = webPlayer({ entryCount: 0, read: () => new Uint8Array() } as unknown as VmDat);
   expect(silent.play(0x89, false, false)).toBe(true);
   vi.unstubAllGlobals();
+});
+
+it('WAV는 RIFF 길이(+ 8)까지: 한국어판 DATA13은 항목마다 131072바이트 칸을 0으로 채운다. 길이가 맞거나 RIFF가 아니면 그대로', () => {
+  const wav = (riff: number, size: number) => {
+    const b = new Uint8Array(size);
+    b.set([0x52, 0x49, 0x46, 0x46]);
+    new DataView(b.buffer).setUint32(4, riff, true);
+    return b;
+  };
+  expect(wavBytes(wav(100, 200)).length).toBe(108);
+  const exact = wav(100, 108);
+  expect(wavBytes(exact)).toBe(exact);
+  const notRiff = new Uint8Array(200);
+  expect(wavBytes(notRiff)).toBe(notRiff);
+  const short = Uint8Array.of(0x52, 0x49, 0x46, 0x46);
+  expect(wavBytes(short)).toBe(short);
 });

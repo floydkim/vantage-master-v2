@@ -100,13 +100,21 @@ export function Play() {
   const [launched, setLaunched] = useState(false); // 바탕화면 아이콘으로 실행하기 전(사용자가 눌러야 브라우저가 소리를 낸다)
   const [devices, setDevices] = useState(() => bgmDevices(null)); // 쓸 수 있는 BGM 장치(Sound 대화 상자 라디오 차례)
   useEffect(() => {
-    void detectOrigin(store).then(async (o) => {
-      // BGM을 만들기 전에: 저장된 장치를 쓸 수 없으면(CD 음악을 빼고 다시 넣음 등) 이번 실행은 첫 쓸 수 있는 장치로. 저장된 선택은 그대로(다시 넣으면 그 장치)
-      const d = bgmDevices(o === 'stored' ? await store.paths().catch(() => []) : null);
-      setDevices(d);
-      setOpts((p) => ({ ...p, device: fallbackDevice(p.device, d) }));
+    void detectOrigin(store).then((o) => {
       setOrigin(o);
-      if (o !== 'none') loadOriginal().then(setOriginal, (e: unknown) => setError(e instanceof Error ? e.message : String(e)));
+      if (o === 'none') return;
+      // 저장소 목록(쓸 수 있는 BGM 장치)과 원본을 함께 읽는다. 원본 읽기가 실패하면 목록을 기다리지 않고 오류
+      const devices = o === 'stored' ? store.paths().then(bgmDevices, () => bgmDevices([])) : Promise.resolve(bgmDevices(null));
+      loadOriginal().then(
+        async (loaded) => {
+          // BGM을 만들기 전에: 저장된 장치를 쓸 수 없으면(CD 음악을 빼고 다시 넣음 등) 이번 실행은 첫 쓸 수 있는 장치로. 저장된 선택은 그대로(다시 넣으면 그 장치)
+          const d = await devices;
+          setDevices(d);
+          setOpts((p) => ({ ...p, device: fallbackDevice(p.device, d) }));
+          setOriginal(loaded);
+        },
+        (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
+      );
     });
   }, [store]);
   const chrome = useMemo(() => {
@@ -172,7 +180,7 @@ export function Play() {
     else if (id === 0x9c7f) setPanes((p) => ({ ...p, arranged: p.arranged + 1 }));
   };
   return (
-    <Desktop noKorean={language() === 'ko' && !original.korean} onOriginals={origin === 'stored' ? () => setWizard(true) : undefined}>
+    <Desktop noKorean={language() === 'ko' && !original.korean} fixes={original.korean} running={launched && !quit} onOriginals={origin === 'stored' ? () => setWizard(true) : undefined}>
       {(screen) => quit ? <div style={{ position: 'absolute', inset: 0, background: '#000' }} /> : (
         <>
         {launched ? (

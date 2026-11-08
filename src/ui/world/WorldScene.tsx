@@ -135,14 +135,14 @@ export function WorldScene({
   const cleared = !!map && flags[map.index] === 2;
   const colors = useMemo(() => dibColors(worldPalette(read, map ? read(map.header.paletteId) : null, cleared)), [read, map, cleared]);
   const help = useMemo(() => new HelpWindow(read), [read]);
-  const [helpText, setHelpText] = useState(() => (map ? mapDescription(map) : ''));
+  const [helpText, setHelpText] = useState(() => (map ? mapDescription(map, !!scenario) : ''));
   const layer = useContext(ScreenLayer);
   // 마스터 편집(0x483ef8): READY·맵 정보·마스터 정보 창 닫기는 소리 없이 버린다(0x42aeb6), 도움말은 맵 설명
   const [editing, setEditing] = useState<Editing | null>(null);
   const descriptions = useMemo(() => readDescriptions(exe).masters, [exe]);
   const endEdit = () => {
     setEditing(null);
-    if (map) setHelpText(mapDescription(map)); // 0x42aeb6 → 0x424e78
+    if (map) setHelpText(mapDescription(map, !!scenario)); // 0x42aeb6 → 0x424e78
   };
 
   const paint = (ref: HTMLCanvasElement | null, image: Uint8Array, w: number, h: number) => ref?.getContext('2d')?.putImageData(new ImageData(toRgba(image, colors), w, h), 0, 0);
@@ -178,7 +178,7 @@ export function WorldScene({
     }
     if (!open.masterInfo) setMasterHover(-1); // 새 창(0x42ad13)의 마우스 위도 −1
     setOpen({ mapInfo: true, masterInfo: true });
-    setHelpText(mapDescription(next));
+    setHelpText(mapDescription(next, !!scenario));
     const created = (['mapInfo', 'masterInfo'] as const).filter((k) => !open[k]);
     setOrder((v) => mapSelectOrder<Child>(v, created, 'world'));
   };

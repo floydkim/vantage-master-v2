@@ -57,7 +57,7 @@ import { HELP_H, HELP_W, HelpWindow } from './helpWindow.ts';
 import { type BattleTally, tallyOf, titlePrompt } from '../world/scenarioFlow.ts';
 import { mapDescription } from '../world/worldArt.ts';
 import { drawMinimap, MINIMAP_H, MINIMAP_W, minimapMarks, minimapSamples, minimapTerrain, shrinkTables } from './minimap.ts';
-import { dibColors, resultPalette, timePalette } from './palette.ts';
+import { dibColors, resultPalette } from './palette.ts';
 import { readGlyphs } from './font.ts';
 import { cursorStyle, cursorStyles } from './cursors.ts';
 import { NoticeBoard } from './NoticeBoard.tsx';
@@ -178,11 +178,11 @@ export function BattleWindow({
     return Array.from({ length: 10 }, (_, i) => exe.cString(v.getUint32(i * 4, true)));
   }, [exe]);
   // 시나리오(블록 +0x8)면 진영 1 마스터 설명은 이 맵 MAS의 글(0x42d2e9: 시작·되살리기 0x401899)
+  const scenario = useMemo(() => !!(resume ? readScenario(resume) : setup.battle?.scenario), [resume, setup.battle]);
   const texts = useMemo(() => {
     const t = readDescriptions(exe);
-    const scenario = resume ? readScenario(resume) : setup.battle?.scenario;
     return scenario ? { ...t, enemyMaster: masDescription(read(map.header.enemyMasterId)) } : t;
-  }, [exe, read, map, resume, setup.battle]);
+  }, [exe, read, map, scenario]);
   const dialogs = useMemo(
     (): Record<number, import('../../formats/dialogs.ts').Dialog> => ({
       ...Object.fromEntries(Object.values(TEMPLATE).filter((id) => id > 0).map((id) => [id, readDialog(exe, id)])),
@@ -294,9 +294,7 @@ export function BattleWindow({
   const helpCanvas = useRef<HTMLCanvasElement>(null);
   const viewCanvas = useRef<HTMLCanvasElement>(null);
   const samples = useMemo(() => {
-    const logical = new Uint8Array(256 * 4);
-    const p = timePalette(exe, map, art.base, game.result.state.timeOfDay);
-    for (let i = 0; i < 236; i++) logical.set(p.subarray(i * 4, i * 4 + 3), (i + 10) * 4);
+    const logical = logicalPalette(art, game.result.state); // 그때 시각 팔레트(0x4232a9가 읽는 LOGPALETTE)
     return minimapSamples(art.sheet.chips, logical, shrinkTables(exe, map));
   }, [art]);
   const session = game.session;
@@ -604,7 +602,7 @@ export function BattleWindow({
     dragView(e);
   };
   const dragView = (e: PointerEvent) => {
-    if (session?.phase === 1) setStatus(mapDescription(map));
+    if (session?.phase === 1) setStatus(mapDescription(map, scenario));
     if (!viewDragging.current || stage.moving || !scroller.current) return;
     const vp = viewport();
     const w = Math.trunc((vp.left + vp.width) / 6) - Math.trunc(vp.left / 6);

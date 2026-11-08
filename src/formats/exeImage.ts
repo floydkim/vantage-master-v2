@@ -9,6 +9,8 @@ export interface ExeImage {
   readonly imageBase: number;
   /** 리소스 디렉터리(데이터 디렉터리 2)의 VA, 없으면 0 */
   readonly resources: number;
+  /** 있으면 리소스 글(대화 상자·메뉴, UTF-16)을 이것으로 바꿔 읽는다(우리 번역). where는 대화 상자 글의 자리(dialog:0x7d:t·dialog:0x7d:3) */
+  readonly uiText?: (s: string, where?: string) => string;
 }
 
 interface Section {

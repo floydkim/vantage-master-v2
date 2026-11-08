@@ -5,7 +5,7 @@ import type { GameState, SideRecord } from '../../engine/state.ts';
 import { readActionNames } from '../../formats/actionTable.ts';
 import type { ExeImage } from '../../formats/exeImage.ts';
 import { readNatialTable } from '../../formats/natialTable.ts';
-import { hangulOn } from '../../i18n/hangul.ts';
+import { koreanLayout } from '../../i18n/hangul.ts';
 import { u32 } from './attack.ts';
 import { drawText, readGlyphs } from './font.ts';
 import { CHIP, CHIP_H, CHIP_W, type ReadAny, TRANSPARENT } from './sheet.ts';
@@ -99,7 +99,7 @@ export function drawResultButtons(art: ResultArt, image: Uint8Array, page: numbe
 }
 
 /** 경과 일·시(2자리 수)와 분 글의 x(0x408614). 한국어판은 그 판 글의 빈칸에 맞춰 옮겼다(0x40b5c4·0x40b628·0x40b669) */
-export const elapsedColumns = (): readonly [number, number, number] => (hangulOn() ? [128, 160, 184] : [143, 215, 242]);
+export const elapsedColumns = (): readonly [number, number, number] => (koreanLayout() ? [128, 160, 184] : [143, 215, 242]);
 
 /** vmv2.exe 0x004084c4: 쪽 하나(바탕, 쪽 글자·그림, 단추). winner는 0·1, 무승부 −1. levelUp이 있으면 쪽 5까지 */
 export function drawResultPage(art: ResultArt, state: GameState, winner: number, page: number, hover = -1, frame = 0, levelUp: ResultLevelUp | null = null): Uint8Array {

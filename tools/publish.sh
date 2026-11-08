@@ -21,7 +21,7 @@ elif [ -n "$(ls -A "$OUT" | grep -vx .git || true)" ]; then
 fi
 [ -z "$(git status --porcelain --untracked-files=no)" ] || { echo '커밋하지 않은 변경이 있습니다' >&2; exit 1; }
 set -f
-[ -z "$(git status --porcelain -- $ALLOW)" ] || { echo '커밋하지 않은 변경이 있습니다' >&2; exit 1; } # 공개 대상 경로는 git에 넣지 않은 파일도(무시된 파일은 나오지 않음)
+[ -z "$(git status --porcelain -unormal -- $ALLOW)" ] || { echo '커밋하지 않은 변경이 있습니다' >&2; exit 1; } # 공개 대상 경로는 git에 넣지 않은 파일도(무시된 파일은 나오지 않음, -unormal: status.showUntrackedFiles 설정과 상관없이)
 set +f
 
 # 임시 폴더에 풀어 검사한다(실패하면 대상은 그대로)

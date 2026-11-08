@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { byteText, embolden, hangulGlyphs, hangulOn, htmlText, setHangul, setWideGlyphs, wideChar } from '../../src/i18n/hangul.ts';
+import { byteText, embolden, hangulGlyphs, koreanLayout, htmlText, setHangul, setWideGlyphs, wideChar } from '../../src/i18n/hangul.ts';
 import { editText } from '../../src/ui/frame/DialogBox.tsx';
 import { drawText, readGlyphs } from '../../src/ui/battle/font.ts';
 import { read } from '../ui/screenCases.ts';
@@ -67,7 +67,7 @@ it('원문(setWideGlyphs)은 글리프만: HTML 풀기·편집 칸·한국어판
   const out = new Uint8Array(40 * 16);
   drawText(out, 0, 40, '\x82\xa0', 7, glyphs);
   expect(out.subarray(0, 16).every((v) => v === 7)).toBe(true);
-  expect([htmlText(s), byteText('가'), hangulOn()]).toEqual([s, '가', false]);
+  expect([htmlText(s), byteText('가'), koreanLayout()]).toEqual([s, '가', false]);
 });
 
 it('Neo둥근모 파일을 못 받아도(기준 경로·CSP·오프라인) 한국어 글리프는 다음 글꼴로 만든다 — 게임이 열린다', async () => {

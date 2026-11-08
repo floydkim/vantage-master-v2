@@ -11,6 +11,8 @@
     "fetch-soundfont": "sh tools/fetch-soundfont.sh",
     "import-cd-audio": "sh tools/import-cd-audio.sh",
     "import-korean": "sh tools/import-korean.sh",
+    "i18n-dump": "VM_I18N_DUMP=1 vitest run test/i18n/dump.test.ts",
+    "i18n-merge": "node tools/i18n/merge-ko.ts",
     "publish-public": "sh tools/publish.sh",
     "oracle-setup": "python3 -m venv --clear tools/.venv && tools/.venv/bin/pip install -q -r tools/oracle/requirements.txt",
     "oracle-check": "sh tools/oracle/py.sh tools/oracle/selftest.py && sh tools/oracle/py.sh tools/oracle/check_state_map.py",

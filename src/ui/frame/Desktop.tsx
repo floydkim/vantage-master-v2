@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useLayoutEffect, useState } from 'react';
-import { type Language, language, setLanguage } from '../battle/original.ts';
+import { fixesOn, type Language, language, setFixesOn, setLanguage } from '../battle/original.ts';
 import type { Point, Size } from './layout.ts';
 import './win98.css';
 
@@ -12,6 +12,7 @@ export const SCREEN_SIZES: readonly Size[] = [
   { width: 1280, height: 1024 },
 ];
 const KEY = 'vmv2.screen';
+const RESTART_CONFIRM = '게임이 종료됩니다. 바꾸시겠습니까?';
 const PAD = 8; // .w98-host 여백(오른쪽·아래)
 
 /** 가상 화면 요소: 팝업(VANTAGEPOPUP)·대화 상자는 여기에 그린다(MDI 클라이언트에 잘리지 않게, 좌표는 화면 기준) */
@@ -39,8 +40,18 @@ export function fitScreen(viewport: Size, at: Point, pad: number): Size {
 }
 
 /** 가상 화면: 크기는 사용자가 고르고(브라우저 저장소에 둠), 원작 프레임이 그 안에 열린다 */
-/** noKorean: 한국어로 두었는데 한국어판 자료가 없거나 다른 빌드라 원문으로 읽었다(언어 select에 알림). onOriginals: 있으면 [원본 파일…](설치 마법사 다시 열기) */
-export function Desktop({ noKorean = false, onOriginals, children }: { readonly noKorean?: boolean; readonly onOriginals?: () => void; readonly children: (screen: Size) => ReactNode }) {
+/**
+ * noKorean: 한국어로 두었는데 한국어판 자료가 없거나 다른 빌드라 우리 번역으로 읽었다(언어 select에 '새 번역'). onOriginals: 있으면 [원본 파일…](설치 마법사 다시 열기).
+ * fixes: 한국어판으로 읽었다('오역 보정' 체크를 보임). running: 게임을 실행했고 Quit 전(언어·보정을 바꾸면 다시 열려 게임이 끝나므로 묻는다)
+ */
+export function Desktop({
+  noKorean = false,
+  fixes = false,
+  running = false,
+  onOriginals,
+  children,
+}: { readonly noKorean?: boolean; readonly fixes?: boolean; readonly running?: boolean; readonly onOriginals?: () => void; readonly children: (screen: Size) => ReactNode }) {
+  const proceed = () => !running || window.confirm(RESTART_CONFIRM);
   const [choice, setChoice] = useState<Choice>(stored);
   const [element, setElement] = useState<HTMLDivElement | null>(null);
   const [fitted, setFitted] = useState<Size | null>(null);
@@ -83,11 +94,25 @@ export function Desktop({ noKorean = false, onOriginals, children }: { readonly 
         </label>{' '}
         <label>
           언어{' '}
-          <select defaultValue={language()} onChange={(e) => setLanguage(e.target.value as Language)}>
-            <option value="ko">{noKorean ? '한국어(자료 없음)' : '한국어'}</option>
+          <select
+            defaultValue={language()}
+            onChange={(e) => {
+              if (proceed()) setLanguage(e.target.value as Language);
+              else e.target.value = language();
+            }}
+          >
+            <option value="ko">{noKorean ? '한국어(새 번역)' : '한국어'}</option>
             <option value="original">원문</option>
           </select>
         </label>
+        {fixes && (
+          <>
+            {' '}
+            <label>
+              <input type="checkbox" checked={fixesOn()} onChange={(e) => proceed() && setFixesOn(e.target.checked)} /> 오역 보정
+            </label>
+          </>
+        )}
         {onOriginals && (
           <>
             {' '}

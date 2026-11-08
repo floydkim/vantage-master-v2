@@ -19,6 +19,7 @@ export interface MenuItem {
 /** 메뉴 id의 항목들 */
 export function readMenu(exe: ExeImage, id: number): MenuItem[] {
   let p = resourceData(exe, RT_MENU, id).va;
+  const ui = exe.uiText ?? ((t: string) => t);
   const u16 = () => {
     const v = new DataView(exe.read(p, 2).buffer).getUint16(0, true);
     p += 2;
@@ -36,10 +37,10 @@ export function readMenu(exe: ExeImage, id: number): MenuItem[] {
     const out: MenuItem[] = [];
     for (;;) {
       const flags = u16();
-      if (flags & MF_POPUP) out.push({ id: 0, text: wide(), flags: flags & ~(MF_POPUP | MF_END), items: list() });
+      if (flags & MF_POPUP) out.push({ id: 0, text: ui(wide()), flags: flags & ~(MF_POPUP | MF_END), items: list() });
       else {
         const itemId = u16();
-        out.push({ id: itemId, text: wide(), flags: flags & ~MF_END });
+        out.push({ id: itemId, text: ui(wide()), flags: flags & ~MF_END });
       }
       if (flags & MF_END) return out;
     }

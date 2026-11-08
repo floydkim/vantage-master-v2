@@ -322,9 +322,9 @@ export function clickSounds(window: 'world' | 'mapInfo' | 'masterInfo', hit: num
   return (hit & 0x1f) === 0 ? [1] : [4];
 }
 
-/** 맵 설명(맵 +0x1a0, 0x424e78): 맵을 고르면 도움말 창에 */
-export const mapDescription = (map: GameMap): string => {
-  const bytes = map.struct.subarray(0x1a0);
+/** 맵 설명(0x424e78): 맵을 고르면 도움말 창에. 시나리오 플래그(*0x5061d8, 시나리오·Expert)가 서 있으면 맵 +0x78, 아니면 +0x1a0 */
+export const mapDescription = (map: GameMap, scenario: boolean): string => {
+  const bytes = map.struct.subarray(scenario ? 0x78 : 0x1a0);
   const end = bytes.indexOf(0);
   return String.fromCharCode(...bytes.subarray(0, end < 0 ? bytes.length : end)); // 바이트 그대로(맵 이름과 같은 까닭)
 };

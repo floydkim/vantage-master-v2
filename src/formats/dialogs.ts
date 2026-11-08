@@ -67,7 +67,9 @@ export function readDialog(exe: ExeImage, id: number): Dialog {
   p = rect + 8;
   nameOrOrdinal(); // 메뉴
   nameOrOrdinal(); // 창 클래스
-  const title = wide();
+  const ui = exe.uiText ?? ((t: string) => t);
+  const at = `dialog:0x${id.toString(16)}`;
+  const title = ui(wide(), `${at}:t`);
   let font: Dialog['font'] = null;
   if (style & DS_SETFONT) {
     const size = u16(p);
@@ -85,7 +87,7 @@ export function readDialog(exe: ExeImage, id: number): Dialog {
     const className = nameOrOrdinal();
     const text = nameOrOrdinal();
     p += 2 + u16(p); // 만들 때 넘기는 자료
-    controls.push({ id: cid, style: cstyle, className: className ?? 0, text: typeof text === 'number' ? String(text) : text, x: cx, y: cy, w: cw, h: ch });
+    controls.push({ id: cid, style: cstyle, className: className ?? 0, text: typeof text === 'number' ? String(text) : text === null ? null : ui(text, `${at}:${i}`), x: cx, y: cy, w: cw, h: ch });
   }
   return { title, style, font, x, y, w, h, controls };
 }

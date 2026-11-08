@@ -6,7 +6,7 @@ import { decodeState } from '../../src/engine/state.ts';
 import { drawMinimap, MINIMAP_H, MINIMAP_W, minimapMarks, minimapSamples, minimapTerrain, shrinkTables } from '../../src/ui/battle/minimap.ts';
 import { timePalette } from '../../src/ui/battle/palette.ts';
 import { CHIP, CHIP_W } from '../../src/ui/battle/sheet.ts';
-import { loadBattleArt } from '../../src/ui/battle/screen.ts';
+import { loadBattleArt, logicalPalette } from '../../src/ui/battle/screen.ts';
 import { inflateBlock, readGolden } from '../engine/block.ts';
 import { exe, mapOf, read } from './screenCases.ts';
 
@@ -41,8 +41,7 @@ it('미니맵 표본(0x40d53d·0x4232a9, 맵별 부류 0x4231af), 우리 표본�
     const map = mapOf(c.map);
     const art = loadBattleArt(exe, read, map);
     const state = decodeState(inflateBlock(c.block));
-    const logical = new Uint8Array(1024); // 원작 색표 대신 우리 색표(위 시험이 같음을 확인)
-    logical.set(timePalette(exe, map, art.base, state.timeOfDay).subarray(0, 236 * 4), 10 * 4);
+    const logical = logicalPalette(art, state); // 원작 색표 대신 앱과 같은 우리 색표(10~245번은 위 시험이 원작과 같음을 확인)
     const samples = minimapSamples(art.sheet.chips, logical, shrinkTables(exe, map));
     // 2 × 2에 투명(0) 칸이 있으면 원작은 작업 버퍼(0x483f00)에 남은 값을 둔다: 어느 부품도 쓰지 않는 칩이라 0으로 가려 비교한다(생성기도 같은 가림)
     const opaque = (k: number) => {

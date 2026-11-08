@@ -66,7 +66,7 @@ function replay(c: Case, sides: [SideRecord, SideRecord]): string[] {
   let side = 0;
   let nameOpen = false;
   let nameText = '';
-  let help = mapDescription(map);
+  let help = mapDescription(map, false);
   let hover = -1;
   c.args.actions!.forEach((a, i) => {
     const want = c.expected.steps![i];
@@ -75,7 +75,7 @@ function replay(c: Case, sides: [SideRecord, SideRecord]): string[] {
     const close = () => {
       edit = null;
       nameOpen = false;
-      help = mapDescription(map); // 0x424e78
+      help = mapDescription(map, false); // 0x424e78
     };
     switch (a[0]) {
       case 'open':

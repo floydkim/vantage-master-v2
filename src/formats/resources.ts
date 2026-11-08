@@ -21,3 +21,17 @@ export function resourceData(exe: ExeImage, type: number, id: number): { readonl
   const data = entry(languages, null);
   return { va: exe.imageBase + u32(exe.resources + data), size: u32(exe.resources + data + 4) };
 }
+
+/** 리소스 종류의 숫자 id들(디렉터리 차례). 그 종류가 없으면 빈 배열 */
+export function resourceIds(exe: ExeImage, type: number): number[] {
+  if (!exe.resources) return [];
+  const u16 = (va: number) => new DataView(exe.read(va, 2).buffer).getUint16(0, true);
+  const u32 = (va: number) => new DataView(exe.read(va, 4).buffer).getUint32(0, true);
+  const entries = (dir: number) => {
+    const named = u16(exe.resources + dir + 12);
+    const count = named + u16(exe.resources + dir + 14);
+    return Array.from({ length: count - named }, (_, i) => exe.resources + dir + 16 + (named + i) * 8);
+  };
+  const t = entries(0).find((at) => u32(at) === type);
+  return t === undefined ? [] : entries(u32(t + 4) & 0x7fffffff).map((at) => u32(at));
+}

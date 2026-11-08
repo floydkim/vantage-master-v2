@@ -15,7 +15,7 @@ export type Collected = { readonly ok: true; readonly files: ReadonlyMap<string,
 export const GAME_EXE_SHA256 = 'daa647ff03cc1437fe5ade458f6a43a7138e8bfb820a86fb1b661ca75895819f'; // 팔콤 VM Online(V2 영문판) vmv2.exe
 const KO_EXE = 'bfdbd88a994b1e505acf0bc4a7c05d2020ef7c09a3b894d01569a511b28693c5'; // 한국어판(src/i18n/koStrings.json을 만든 빌드)
 const GAME_FILES = [...[0, 1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13].map(datFileName), ...[0, 9, 10].map(dirFileName)];
-const KO_FILES = [0, 8, 9, 10].map(datFileName);
+const KO_FILES = [0, 8, 9, 10, 13].map(datFileName); // 13: 효과음·한국어 더빙 음성
 const MAX_EXE = 64 * 2 ** 20; // VMOnline.exe는 약 21MB: 이보다 큰 exe는 읽지 않는다
 const NO_CRYPTO = '이 주소(http)에서는 파일을 확인할 수 없습니다. https 주소나 localhost로 여세요';
 

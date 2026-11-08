@@ -103,6 +103,13 @@ export class Sound {
   }
 }
 
+/** WAV를 RIFF 길이(+ 8)까지. 한국어판 DATA13은 항목마다 131072바이트 칸을 0으로 채운다(영문판은 길이가 맞음) */
+export function wavBytes(entry: Uint8Array): Uint8Array {
+  if (entry.length < 8 || String.fromCharCode(...entry.subarray(0, 4)) !== 'RIFF') return entry;
+  const end = new DataView(entry.buffer, entry.byteOffset).getUint32(4, true) + 8;
+  return end < entry.length ? entry.subarray(0, end) : entry;
+}
+
 const players = new WeakMap<VmDat, Player>();
 const silent: Player = { play: () => true, stop: () => {} };
 
@@ -128,7 +135,7 @@ class WebPlayer implements Player {
 
   constructor(dat13: VmDat) {
     for (let i = 0; i < dat13.entryCount; i++) {
-      const wav = dat13.read(i);
+      const wav = wavBytes(dat13.read(i));
       if (wav.length) this.context.decodeAudioData(wav.slice().buffer).then((b) => this.buffers.set(i, b), () => {});
     }
   }

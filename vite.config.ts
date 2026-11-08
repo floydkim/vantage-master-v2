@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import react from '@vitejs/plugin-react';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
+import { reviewAnswersHandler } from './tools/i18n/review-answers.ts';
 
 // 함께 배포하는 글꼴(SIL OFL 1.1: 글꼴과 함께 저작권 줄·라이선스 글을 실어야 한다)
 const FONT_LICENSES = ['src/i18n/fonts/neodgm-LICENSE.txt', 'src/ui/frame/fonts/galmuri-LICENSE.txt'];
@@ -52,9 +53,14 @@ export function soundFont(sf2 = SOUNDFONT): Plugin {
   };
 }
 
+/** 개발 서버만: 번역 검수 답(#review, tools/i18n/review-answers.ts) */
+export function reviewAnswers(file = 'original/i18n-review/answers.json'): Plugin {
+  return { name: 'review-answers', apply: 'serve', configureServer: (server) => void server.middlewares.use('/__review/answers', reviewAnswersHandler(file)) };
+}
+
 export default defineConfig(({ command }) => ({
   base: './', // 배포 빌드가 하위 경로(GitHub Pages /vantage-master-v2/)에서도 돌게. 개발 서버는 그대로 /
-  plugins: [react(), thirdPartyLicenses(), soundFont()],
+  plugins: [react(), thirdPartyLicenses(), soundFont(), reviewAnswers()],
   // 원본 데이터(git 제외, 배포 불가: 게임 데이터·CD 음원·오프닝)는 개발 서버만 서빙한다: original/VMO_WIN/DATA00.DAT → /VMO_WIN/DATA00.DAT
   publicDir: command === 'serve' ? 'original' : false,
   test: { include: ['test/**/*.test.ts'] },

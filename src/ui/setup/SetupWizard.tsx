@@ -264,9 +264,9 @@ export function SetupWizard({ store, onDone, onCancel, problem }: { readonly sto
     </>,
     <>
       <h2>한국어판 (선택)</h2>
-      <p>한국어판 게임 폴더가 있으면 고르세요. 공식 한국어 글로 볼 수 있습니다. 한국어판 폴더에 CD 음악(bgm·mp3)이 들어 있으면 함께 씁니다.</p>
+      <p>한국어판 게임 폴더가 있으면 고르세요. 공식 한국어 글과 더빙 음성으로 볼 수 있습니다. 없으면 새로 번역한 한국어로 나옵니다. 한국어판 폴더에 CD 음악(bgm·mp3)이 들어 있으면 함께 씁니다.</p>
       <Source onPick={(p) => void pick('korean', p)} />
-      <Result r={picks.korean} empty={picks.clearKorean ? '비웁니다(원문으로)' : stored.korean ? '저장된 한국어판을 그대로 씁니다' : '건너뛰면 원문(영어)으로'} />
+      <Result r={picks.korean} empty={picks.clearKorean ? '비웁니다(새 번역으로)' : stored.korean ? '저장된 한국어판을 그대로 씁니다' : '건너뛰면 새로 번역한 한국어로'} />
       {koreanButton && (
         <div className="setup-row">
           <button type="button" className="w98-push" onClick={() => setPicks((p) => ({ ...p, korean: undefined, clearKorean: koreanButton === '비우기' || p.clearKorean }))}>
@@ -293,7 +293,7 @@ export function SetupWizard({ store, onDone, onCancel, problem }: { readonly sto
       <h2>준비 완료</h2>
       <div className="setup-ok">✓ 게임: {picks.game?.ok ? picks.game.note : '저장된 것'}</div>
       <div className={korean || (stored.korean && !picks.clearKorean) ? 'setup-ok' : 'setup-dim'}>
-        {korean ? `✓ ${music ? korean.note : '한국어판'}` : stored.korean && !picks.clearKorean ? '✓ 한국어판: 저장된 것' : '– 한국어판: 없음(원문)'}
+        {korean ? `✓ ${music ? korean.note : '한국어판'}` : stored.korean && !picks.clearKorean ? '✓ 한국어판: 저장된 것' : '– 한국어판: 없음(새 번역)'}
       </div>
       <div className={picks.album?.ok || music || (kept && !picks.clearMusic) ? 'setup-ok' : 'setup-dim'}>
         {picks.album?.ok ? `✓ ${picks.album.note}` : music ? `✓ CD 음악: 한국어판 ${music}곡` : kept && !picks.clearMusic ? `✓ 저장된 ${kept}` : '– CD 음악: 없음(MIDI)'}
