@@ -35,8 +35,12 @@ jobs:
       - run: pnpm fetch-soundfont # BGM 사운드폰트(GeneralUser GS, 함께 배포 허락). 받지 못하면 소리 없는 사이트를 올리지 않고 멈춘다
       - run: pnpm typecheck
       - run: pnpm build
+      # 재실행은 같은 실행에 아티팩트를 더한다. 이름이 같으면 deploy-pages가 "Multiple artifacts"로 멈추므로 실행 차례마다 다른 이름을 쓴다
       - uses: actions/upload-pages-artifact@v5
         with:
+          name: github-pages-${{ github.run_attempt }}
           path: dist
       - id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}

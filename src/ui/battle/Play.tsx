@@ -94,7 +94,6 @@ export function Play() {
   const [places, setPlaces] = useState<WindowPlaces>({});
   const [traceAsked, setTraceAsked] = useState(false); // 시작 때 SV080 질문(WinMain 0x441fd3)은 한 번
   const [opening, setOpening] = useState(true); // FALCOM.AVI는 앱을 처음 열 때만(0x425fcd). 타이틀로 돌아올 때(0x425fa0)는 없다
-  const [quit, setQuit] = useState(false); // Quit: 프레임을 없앤다(0x4261f7 → DestroyWindow(프레임))
   // 원본 출처(서버 먼저, 다음 브라우저 저장소). 없으면 설치 마법사, [원본 파일…]로 다시 열기
   const store = useMemo(() => idbStore(), []);
   const [origin, setOrigin] = useState<Origin | null>(null);
@@ -139,7 +138,7 @@ export function Play() {
     if (chrome) chrome.sound.effects = (opts.options & OPT.effects) !== 0; // 대화 상자가 닫힌 뒤 적용(OK 소리는 옛 비트)
   }, [chrome, opts.options]);
   // 월드 장면(0x4516f4)은 BGM 1. 결과 창 뒤·게임 데이터 읽기 뒤에도
-  const inWorld = world !== null && setup === null && scene6 === null && !quit;
+  const inWorld = world !== null && setup === null && scene6 === null;
   useEffect(() => {
     if (inWorld) chrome?.bgm.play(1);
   }, [inWorld, chrome]);
@@ -186,8 +185,8 @@ export function Play() {
     else if (id === 0x9c7f) setPanes((p) => ({ ...p, arranged: p.arranged + 1 }));
   };
   return (
-    <Desktop noKorean={language() === 'ko' && !original.korean} fixes={original.korean} running={launched && !quit} onOriginals={origin === 'stored' ? () => setWizard(true) : undefined}>
-      {(screen) => quit ? <div style={{ position: 'absolute', inset: 0, background: '#000' }} /> : (
+    <Desktop noKorean={language() === 'ko' && !original.korean} fixes={original.korean} running={launched} onOriginals={origin === 'stored' ? () => setWizard(true) : undefined}>
+      {(screen) => (
         <>
         {launched ? (
         <FrameWindow title={frameTitle(original.exe, ctx)} icon={chrome.icon} menu={chrome.menu} flags={flags} onCommand={command} onClose={closeGame} screen={screen} metrics={WIN98}>
@@ -302,8 +301,9 @@ export function Play() {
                 opening={opening}
                 onOpeningDone={() => setOpening(false)}
                 onQuit={() => {
+                  // 0x4261f7은 프레임을 없애 프로그램을 끝낸다. 브라우저 탭은 닫을 수 없어 닫기 단추처럼 바탕화면으로
                   chrome.bgm.close();
-                  setQuit(true);
+                  location.reload();
                 }}
                 onMusic={(track) => chrome.bgm.play(track)}
                 onScenario={(mode) => {

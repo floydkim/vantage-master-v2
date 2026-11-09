@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { clickAction, dragStarted, keepInside } from '../../src/ui/frame/LaunchIcon.tsx';
+import { clickAction, dragStarted, iconPos, keepInside } from '../../src/ui/frame/LaunchIcon.tsx';
 
 it('실행 아이콘 클릭: 마우스 한 번 클릭은 고르기만(실행은 더블클릭), 터치·펜 탭은 잠시 뒤 실행(더블탭의 둘째 탭이 오프닝을 넘기지 않게), 키보드·화면 읽기 프로그램의 가상 클릭은 바로', () => {
   expect([clickAction('mouse', 1), clickAction('mouse', 2)]).toEqual(['select', 'select']);
@@ -25,4 +25,11 @@ it('끈 뒤의 클릭: 마우스·터치 클릭(detail ≥ 1)은 무시, 키보�
   expect([clickAction('mouse', 1, true), clickAction('touch', 1, true)]).toEqual(['ignore', 'ignore']);
   expect([clickAction(null, 0, true), clickAction(null, 1, true)]).toEqual(['open', 'open']);
   expect(clickAction('mouse', 1, false)).toBe('select');
+});
+
+it('저장한 아이콘 자리: 수 둘이면 그 자리, 없거나 망가졌으면 왼쪽 위 첫 자리', () => {
+  const home = { x: 8, y: 8 };
+  expect(iconPos('{"x":355,"y":231}')).toEqual({ x: 355, y: 231 });
+  expect(iconPos('{"x":-20,"y":9000}')).toEqual({ x: -20, y: 9000 }); // 화면 안으로 들이는 것은 keepInside
+  expect([null, '', 'not json', 'null', '3', '{}', '{"x":1}', '{"x":"1","y":2}', '{"x":null,"y":2}'].map(iconPos)).toEqual(Array(9).fill(home));
 });

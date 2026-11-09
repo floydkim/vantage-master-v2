@@ -22,10 +22,22 @@ export const keepInside = (p: Point, icon: Size, screen: Size): Point => ({
 });
 
 const HOME: Point = { x: 8, y: 8 }; // 바탕화면 왼쪽 위 첫 아이콘 자리
+const POS = 'vmv2.iconPos';
+
+/** 저장한 글(JSON)에서 아이콘 자리. 없거나 망가졌으면 첫 자리 */
+export function iconPos(saved: string | null): Point {
+  try {
+    const p = JSON.parse(saved ?? 'null') as Partial<Point> | null;
+    if (typeof p?.x === 'number' && typeof p.y === 'number') return { x: p.x, y: p.y };
+  } catch {
+    // 망가진 값
+  }
+  return HOME;
+}
 
 /**
  * 바탕화면의 실행 아이콘(Win98: 마우스 한 번 클릭은 고르기, 더블클릭·Enter·Space로 실행). 브라우저는 사용자가 페이지를 누르기 전엔 소리를 막으므로
- * 게임을 이 아이콘으로 시작해 오프닝 첫 BGM부터 나게 한다. 터치·펜은 탭 한 번에 실행(clickAction). 끌어서 바탕화면 위로 옮길 수 있다(저장하지 않음).
+ * 게임을 이 아이콘으로 시작해 오프닝 첫 BGM부터 나게 한다. 터치·펜은 탭 한 번에 실행(clickAction). 끌어서 바탕화면 위로 옮길 수 있다(마지막 자리를 저장).
  * 골라짐은 상태(처음 켬, 바탕화면 다른 곳을 누르면 끔), 초점은 아무 데도 없을 때만 — active(마법사가 닫힘)가 될 때마다 — 준다
  */
 export function LaunchIcon({ icon, label, screen, active, onOpen }: { readonly icon: string; readonly label: string; readonly screen: Size; readonly active: boolean; readonly onOpen: () => void }) {
@@ -34,7 +46,13 @@ export function LaunchIcon({ icon, label, screen, active, onOpen }: { readonly i
   const later = useRef<ReturnType<typeof setTimeout> | null>(null);
   const press = useRef<{ readonly id: number; readonly x: number; readonly y: number; readonly from: Point } | null>(null);
   const dragged = useRef(false); // 끌었으면 이어지는 마우스·터치 클릭은 실행·고르기로 치지 않는다(clickAction)
-  const [pos, setPos] = useState(HOME);
+  const [pos, setPos] = useState(() => {
+    try {
+      return iconPos(localStorage.getItem(POS));
+    } catch {
+      return HOME; // 저장소를 못 쓰면 첫 자리
+    }
+  });
   const [ghost, setGhost] = useState<Point | null>(null);
   const [selected, setSelected] = useState(true);
   useEffect(() => () => clearTimeout(later.current ?? undefined), []);
@@ -101,7 +119,14 @@ export function LaunchIcon({ icon, label, screen, active, onOpen }: { readonly i
           if (!at) return;
           press.current = null;
           setGhost(null);
-          if (dragged.current) setPos(keepInside(at, { width: e.currentTarget.offsetWidth, height: e.currentTarget.offsetHeight }, screen));
+          if (!dragged.current) return;
+          const to = keepInside(at, { width: e.currentTarget.offsetWidth, height: e.currentTarget.offsetHeight }, screen);
+          setPos(to);
+          try {
+            localStorage.setItem(POS, JSON.stringify(to)); // 놓을 때만: 화면을 줄여 안으로 들인 자리는 저장하지 않아 키우면 돌아온다
+          } catch {
+            // 저장소를 못 쓰면 이번에만
+          }
         }}
         onPointerCancel={stop}
         onLostPointerCapture={stop}
