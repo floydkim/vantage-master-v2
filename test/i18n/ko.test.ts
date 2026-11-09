@@ -75,7 +75,6 @@ for (const s of all) byKey.set(sourceKey(s), [...(byKey.get(sourceKey(s)) ?? [])
 const entries = Object.entries(table as KoTable);
 // 표의 키는 원문 해시이거나 자리 키(where, 같은 원문을 자리마다 다르게 옮긴 것)
 const srcOf = (key: string) => byKey.get(key)?.[0] ?? all.find((s) => s.where === key);
-const wheresOf = (key: string) => byKey.get(key)?.map((s) => s.where) ?? [key];
 const cp949Decoder = new TextDecoder('euc-kr');
 const decode = (s: string) => cp949Decoder.decode(Uint8Array.from(s, (c) => c.charCodeAt(0)));
 const FORMAT = /%(?:[-+ 0#]*\d*(?:\.\d+)?[a-zA-Z]|%)/g;
@@ -143,34 +142,21 @@ it('DATA10 번역 칸은 칸 안에 들어간다(textRead 결과에 번역이 �
   expect(fields.filter((s) => field(r((10 << 16) | Number(s.where.split(':')[1])), Number(s.where.split(':')[2])) !== ko.text(s.text)).map((s) => s.where)).toEqual([]);
 });
 
-// 명칭은 정발판 표기대로 둔다(사용자 결정, docs/i18n/glossary.md): 20바이트 넘는 명칭은 자리로만 적어 뺀다
-const OFFICIAL_NAMES = new Set(['exe:0x47158c', 'exe:0x471014']); // 아이템 이름 15·9
-const officialName = (where: string) => OFFICIAL_NAMES.has(where) || /^(map|mas):\d+:0x0$/.test(where); // 맵·적 마스터 이름 칸
+// 누가 옮겨도 같아질 평범한 문장과 명칭은 막지 않는다(사용자 결정 2026-11-09: 같다는 이유로 어색하게 바꾸지 않는다). 이보다 긴 글이 똑같으면 옮겨 적은 것으로 본다
+const COPIED_BYTES = 41;
 
-// 사용자가 직접 쓴 제안이라 정발판 줄과 같아도 그대로 둔다(자리로만 적음)
-const USER_WORDING = new Set(['exe:0x464f9c']); // 현상 수배범 설명
-
-describe.skipIf(!koExe)('정발판 글과 같은 번역이 없다(20바이트 이상, 정발판 명칭 자리는 뺌)', () => {
-  it('exe 대응 글, 장면·엔딩 줄, DATA10 글 칸, 대화 상자·메뉴 글', () => {
+describe.skipIf(!koExe)('정발판 글을 옮겨 적지 않았다', () => {
+  it(`글 전체나 어느 한 줄이 ${COPIED_BYTES}바이트 이상 정발판 글·줄과 똑같지 않다(원문 그대로인 글은 뺌)`, () => {
     const pairs = new Map(Object.entries(koStrings).map(([e, k]) => [Number(e), Number(k)]));
     const dats = new Map([8, 9, 10].map((n) => [n, koDat(n)]));
     const kr: Edition = { exe: koreanExe(exe, koExe!, pairs), read: koreanRead(read, (id) => dats.get(id >>> 16)!.read(id & 0xffff)) };
-    const official = new Set(allSources(kr).map((s) => (s.wide ? s.text : decode(s.text))));
-    // 원문 그대로 둔 글(서식 글 등, 정발판도 그대로)은 옮긴 것이 아니다
-    const same = entries.filter(([k, v]) => cp949(v).length >= 20 && official.has(v) && v !== srcOf(k)!.text && !/^《[^》\n]*》\n?$/.test(v)).map(([k]) => wheresOf(k)); // 《이름》만 든 머리 칸도 명칭
-    expect(same.filter((wheres) => !wheres.every(officialName)).flat()).toEqual([]);
-  });
-
-  it('줄 단위로도: 번역의 어느 줄(20바이트 이상)도 정발판의 어느 줄과 같지 않다(명칭·《이름》 줄·원문 그대로인 글·사용자 제안은 뺌)', () => {
-    const pairs = new Map(Object.entries(koStrings).map(([e, k]) => [Number(e), Number(k)]));
-    const dats = new Map([8, 9, 10].map((n) => [n, koDat(n)]));
-    const kr: Edition = { exe: koreanExe(exe, koExe!, pairs), read: koreanRead(read, (id) => dats.get(id >>> 16)!.read(id & 0xffff)) };
-    const official = new Set(allSources(kr).flatMap((s) => (s.wide ? s.text : decode(s.text)).split('\n').map((l) => l.trim())));
-    const wrong = entries.flatMap(([k, v]) => {
-      if (v === srcOf(k)!.text || wheresOf(k).every((w) => officialName(w) || USER_WORDING.has(w))) return [];
-      return v.split('\n').map((l) => l.trim()).filter((l) => cp949(l).length >= 20 && official.has(l) && !/^《[^》]*》$/.test(l)).map((l) => `${srcOf(k)!.where} ${l}`);
+    const texts = allSources(kr).map((s) => (s.wide ? s.text : decode(s.text)));
+    const official = new Set(texts.flatMap((text) => [text, ...text.split('\n').map((l) => l.trim())]));
+    const copied = entries.flatMap(([k, v]) => {
+      if (v === srcOf(k)!.text) return []; // 서식 글 등, 정발판도 원문 그대로
+      return [v, ...v.split('\n').map((l) => l.trim())].filter((l) => cp949(l).length >= COPIED_BYTES && official.has(l)).map((l) => `${srcOf(k)!.where} ${l}`);
     });
-    expect(wrong).toEqual([]);
+    expect(copied).toEqual([]);
   });
 });
 

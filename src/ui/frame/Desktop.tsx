@@ -41,8 +41,8 @@ export function fitScreen(viewport: Size, at: Point, pad: number): Size {
 
 /** 가상 화면: 크기는 사용자가 고르고(브라우저 저장소에 둠), 원작 프레임이 그 안에 열린다 */
 /**
- * noKorean: 한국어로 두었는데 한국어판 자료가 없거나 다른 빌드라 우리 번역으로 읽었다(언어 select에 '새 번역'). onOriginals: 있으면 [원본 파일…](설치 마법사 다시 열기).
- * fixes: 한국어판으로 읽었다('오역 보정' 체크를 보임). running: 게임을 실행했고 Quit 전(언어·보정을 바꾸면 다시 열려 게임이 끝나므로 묻는다)
+ * noKorean: 한국어로 두었는데 한국어판 자료가 없거나 다른 빌드라 우리 번역으로 읽었다(언어 select에 '영문판 + 한국어 번역'). onOriginals: 있으면 [원본 파일…](설치 마법사 다시 열기).
+ * fixes: 한국어판으로 읽었다(언어 select에 '한국어판', '오역 보정' 체크를 보임). running: 게임을 실행했고 Quit 전(언어·보정을 바꾸면 다시 열려 게임이 끝나므로 묻는다)
  */
 export function Desktop({
   noKorean = false,
@@ -101,8 +101,8 @@ export function Desktop({
               else e.target.value = language();
             }}
           >
-            <option value="ko">{noKorean ? '한국어(새 번역)' : '한국어'}</option>
-            <option value="original">원문</option>
+            <option value="ko">{noKorean ? '영문판 + 한국어 번역' : fixes ? '한국어판' : '한국어'}</option>
+            <option value="original">영문판</option>
           </select>
         </label>
         {fixes && (
