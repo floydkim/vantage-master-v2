@@ -595,6 +595,7 @@ export function BattleWindow({
   // 미니맵(0x40daeb): 누르면 잡고(0x40e2d4 SetCapture) 끄는 동안 그 점이 가운데가 되게 전장 창을 옮긴다(0x40e1e6: (점 − 보이는 사각형 반) × 6).
   // 움직일 때마다 단계 1이면 도움말을 맵 설명으로(0x403c67 → 0x424e78), 화면 이동 연출 중(0x4147e8)이면 옮기지 않는다. 떼면 놓는다(0x40e30a)
   const viewDragging = useRef(false);
+  const dialogMoved = useRef<Point[]>([]); // 쌓인 대화 상자를 끌어 옮긴 만큼(깊이별, DialogBox가 열릴 때 0으로 알린다)
   const pressView = (e: PointerEvent) => {
     if (e.button !== 0) return;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -783,13 +784,14 @@ export function BattleWindow({
     left: Math.max(0, Math.min(menuAt.x - MENU_W / 2, layer.size.width - MENU_W)),
     top: Math.max(0, Math.min(menuAt.y + MENU_GAP, layer.size.height - MENU_H)),
   };
-  // 쌓인 대화 상자의 자리: 템플릿 (0, 0)이라 클라이언트가 부모(팝업, 또는 부모 대화 상자) 클라이언트 원점에. 0x84만 가운데(0x41b918)
+  // 쌓인 대화 상자의 자리: 템플릿 (0, 0)이라 클라이언트가 부모(팝업, 또는 부모 대화 상자) 클라이언트 원점에(끌어 옮겼으면 옮긴 자리). 0x84만 가운데(0x41b918)
   const placed = (() => {
     let origin: Point = menuPos ? { x: menuPos.left, y: menuPos.top } : { x: 0, y: 0 };
-    return stack.map((d) => {
+    return stack.map((d, i) => {
       const size = dialogLayout(dialogs[TEMPLATE[d.kind]], WIN98, layer.size).outer;
       const at = centered(d.kind) ? centerDialog(null, size, layer.size) : placeDialog(origin, size, WIN98, layer.size);
-      origin = { x: at.x + WIN98.dlgFrame, y: at.y + WIN98.dlgFrame + WIN98.caption };
+      const moved = dialogMoved.current[i];
+      origin = { x: at.x + (moved?.x ?? 0) + WIN98.dlgFrame, y: at.y + (moved?.y ?? 0) + WIN98.dlgFrame + WIN98.caption };
       return at;
     });
   })();
@@ -971,7 +973,7 @@ export function BattleWindow({
               />
             )}
             {stack.map((d, i) => {
-              const box = { dialog: dialogs[TEMPLATE[d.kind]], at: placed[i], metrics: WIN98, enabled: i === stack.length - 1 };
+              const box = { dialog: dialogs[TEMPLATE[d.kind]], at: placed[i], metrics: WIN98, enabled: i === stack.length - 1, onMoved: (p: Point) => void (dialogMoved.current[i] = p) };
               if (d.kind === 'close') {
                 return (
                   <DialogBox

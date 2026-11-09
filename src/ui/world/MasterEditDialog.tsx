@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { readDescriptions } from '../../formats/descriptions.ts';
 import { readDialog } from '../../formats/dialogs.ts';
@@ -72,6 +72,7 @@ export function MasterEditDialog({
 }) {
   const { exe } = original;
   const layer = useContext(ScreenLayer);
+  const moved = useRef<Point>({ x: 0, y: 0 }); // 끌어 옮긴 만큼: 이름 입력 창을 옮긴 자리에 붙인다
   const t = useMemo(
     () => ({
       edit: readDialog(exe, 0x7d),
@@ -125,7 +126,9 @@ export function MasterEditDialog({
       play(EDIT_SOUNDS.editName);
       const outer = dialogLayout(t.edit, WIN98).outer;
       const size = dialogLayout(t.name, WIN98).outer;
-      const parent = { left: editing.at.x, top: editing.at.y, right: editing.at.x + outer.width, bottom: editing.at.y + outer.height };
+      const left = editing.at.x + moved.current.x;
+      const top = editing.at.y + moved.current.y;
+      const parent = { left, top, right: left + outer.width, bottom: top + outer.height };
       onEditing({ ...editing, name: { text: edit.name, at: nameDialogAt(parent, size, layer.size) } });
     } else if (id === STANDARD_NAME) {
       play(EDIT_SOUNDS.standardName);
@@ -149,7 +152,7 @@ export function MasterEditDialog({
   if (!layer.element) return null;
   return createPortal(
     <>
-      <DialogBox dialog={t.edit} at={editing.at} metrics={WIN98} values={values} enabled={editing.name === null} onCommand={command}>
+      <DialogBox dialog={t.edit} at={editing.at} metrics={WIN98} values={values} enabled={editing.name === null} onMoved={(p) => (moved.current = p)} onCommand={command}>
         <Picture image={portrait} size={PORTRAIT_SIZE} rect={fitPicture(portraitRect(koreanLayout()), PORTRAIT_SIZE)} colors={colors} />
       </DialogBox>
       {editing.name && <DialogBox dialog={t.name} at={editing.name.at} metrics={WIN98} values={{ texts: { [NAME_EDIT]: editing.name.text } }} onCommand={nameCommand} />}

@@ -13,6 +13,7 @@ export function FrameWindow({
   menu,
   flags,
   onCommand,
+  onClose,
   screen,
   metrics,
   children,
@@ -23,6 +24,8 @@ export function FrameWindow({
   /** 0x407334가 정한 켬·체크(없는 id는 리소스대로) */
   readonly flags: Readonly<Record<number, MenuFlags>>;
   readonly onCommand: (id: number) => void;
+  /** 캡션 닫기 단추 */
+  readonly onClose: () => void;
   readonly screen: Size;
   readonly metrics: Metrics;
   /** MDI 클라이언트 크기를 받아 자식 창을 그린다 */
@@ -49,7 +52,7 @@ export function FrameWindow({
           <button type="button" className="w98-button minimize" tabIndex={-1} aria-label="최소화" />
           <button type="button" className="w98-button restore" tabIndex={-1} aria-label="이전 크기로" />
           <span className="gap" />
-          <button type="button" className="w98-button close" tabIndex={-1} aria-label="닫기" />
+          <button type="button" className="w98-button close" tabIndex={-1} aria-label="닫기" onClick={onClose} />
         </span>
       </div>
       <div className="w98-menubar" onPointerDown={(e) => e.stopPropagation()}>

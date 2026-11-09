@@ -126,6 +126,10 @@ it('검수에서 고른 낱말로 통일했다(유닛·비행 유닛·비행 네
   expect(entries.filter(([, v]) => /유닛(는|가|를|와|로|나)/.test(v)).map(([k]) => srcOf(k)!.where)).toEqual([]); // 받침에 맞는 조사
 });
 
+it('Range는 사정거리로 쓴다(사용자 결정 2026-11-09). 대화 상자 칸에 들어가지 않는 이름표 사정과 뜻이 다른 말(사람마다 사정이)만 뺀다', () => {
+  expect(entries.filter(([, v]) => v !== '사정' && /(?<!마다 )사정(?!거리)/.test(v)).map(([k]) => srcOf(k)!.where)).toEqual([]);
+});
+
 it('메뉴·대화 상자의 단축 글자 &(&&가 아닌 것) 수가 원문과 같다', () => {
   const amps = (s: string) => s.replaceAll('&&', '').split('&').length - 1;
   expect(entries.filter(([k, v]) => srcOf(k)!.wide && amps(srcOf(k)!.text) !== amps(v)).map(([k]) => srcOf(k)!.where)).toEqual([]);

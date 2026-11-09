@@ -1,10 +1,10 @@
-import { type ReactNode, useContext, useEffect, useRef } from 'react';
+import { type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import type { Dialog } from '../../formats/dialogs.ts';
 import { byteText, htmlText } from '../../i18n/hangul.ts';
 import { ScreenLayer } from './Desktop.tsx';
 import { dialogKey, dialogLayout, isUpdown, stepValue } from './dialogLayout.ts';
 import type { Metrics } from './frame.ts';
-import type { Point } from './layout.ts';
+import { clampPoint, type Point } from './layout.ts';
 
 /** 대화 상자 안 컨트롤 값(SetDlgItemText·LB_ADDSTRING·BM_SETCHECK 같은 것) */
 export interface DialogValues {
@@ -39,7 +39,7 @@ export const editText = (s: string) => byteText(s).replace(/[^\x20-\xff]/g, '');
 /**
  * 원작 대화 상자 템플릿(MS Sans Serif 10pt)을 Win98 모양으로 그린다. 명령은 WM_COMMAND처럼 넘긴다:
  * 단추·라디오·체크는 'click', 목록 선택 바뀜 'select'(LBN_SELCHANGE), 두 번 누름 'double'(LBN_DBLCLK), 편집 칸 글자 바뀜 'update'(EN_UPDATE:
- * 입력 칸에 치거나 업다운이 짝 글자를 바꿀 때, 짝 id와 새 글자). 닫기 단추는 Cancel(2)
+ * 입력 칸에 치거나 업다운이 짝 글자를 바꿀 때, 짝 id와 새 글자). 닫기 단추는 Cancel(2). 제목 표시줄을 끌어 옮길 수 있다(자식이 열려 꺼진 동안은 못 옮김)
  */
 export function DialogBox({
   dialog,
@@ -48,6 +48,7 @@ export function DialogBox({
   values = {},
   enabled = true,
   children,
+  onMoved,
   onCommand,
 }: {
   readonly dialog: Dialog;
@@ -59,9 +60,20 @@ export function DialogBox({
   readonly enabled?: boolean;
   /** 클라이언트 위에 그릴 것(그림 미리보기) */
   readonly children?: ReactNode;
+  /** at에서 끌어 옮긴 만큼이 바뀔 때(자식 대화 상자를 옮겨진 자리에 붙이려는 쪽만) */
+  readonly onMoved?: (moved: Point) => void;
   readonly onCommand: (id: number, code: 'click' | 'select' | 'double' | 'update', index?: number, text?: string) => void;
 }) {
-  const layout = dialogLayout(dialog, metrics, useContext(ScreenLayer).size);
+  const screen = useContext(ScreenLayer).size;
+  const layout = dialogLayout(dialog, metrics, screen);
+  const [moved, setMoved] = useState<Point>({ x: 0, y: 0 });
+  const drag = useRef<{ readonly x: number; readonly y: number; readonly from: Point } | null>(null);
+  const moveBy = (p: Point) => {
+    setMoved(p);
+    onMoved?.(p);
+  };
+  // 화면 크기가 바뀌면 제자리로: 제목 표시줄이 화면 밖에 남아 다시 못 잡는 일이 없게
+  useEffect(() => moveBy({ x: 0, y: 0 }), [screen.width, screen.height]);
   const off = (id: number) => values.disabled?.has(id) ?? false;
   const root = useRef<HTMLDivElement>(null);
   // 대화 관리자는 첫 WS_TABSTOP 컨트롤에 포커스를 준다. 입력 칸이면 글자 전체를 고른다(이름 입력 0x86)
@@ -82,7 +94,7 @@ export function DialogBox({
       aria-modal="true"
       aria-label={htmlText(dialog.title)}
       tabIndex={-1}
-      style={{ left: at.x, top: at.y, width: layout.outer.width, height: layout.outer.height, padding: metrics.dlgFrame, outline: 'none' }}
+      style={{ left: at.x + moved.x, top: at.y + moved.y, width: layout.outer.width, height: layout.outer.height, padding: metrics.dlgFrame, outline: 'none' }}
       onKeyDown={(e) => {
         const id = dialogKey(dialog, e.key);
         if (!enabled || id === null || off(id)) return;
@@ -90,11 +102,28 @@ export function DialogBox({
         onCommand(id, 'click');
       }}
     >
-      <div className={`w98-caption${enabled ? '' : ' inactive'}`}>
+      <div
+        className={`w98-caption${enabled ? '' : ' inactive'}`}
+        onMouseDown={(e) => e.preventDefault()} // 입력 칸의 포커스를 뺏지 않는다
+        onPointerDown={(e) => {
+          if (e.button !== 0 || !enabled) return;
+          e.currentTarget.setPointerCapture(e.pointerId);
+          drag.current = { x: e.clientX, y: e.clientY, from: moved };
+        }}
+        onPointerMove={(e) => {
+          const d = drag.current;
+          if (!d) return;
+          // MdiChild와 같이 Windows 이동 루프처럼 커서를 화면 안에 가둔다: 잡은 점(제목 표시줄)이 늘 보인다
+          const bounds = e.currentTarget.closest('.w98-screen')?.getBoundingClientRect();
+          const p = bounds ? clampPoint({ x: e.clientX, y: e.clientY }, bounds) : { x: e.clientX, y: e.clientY };
+          moveBy({ x: d.from.x + p.x - d.x, y: d.from.y + p.y - d.y });
+        }}
+        onLostPointerCapture={() => (drag.current = null)}
+      >
         <span className="title">{htmlText(dialog.title)}</span>
         {(dialog.style & WS_SYSMENU) !== 0 && (
           <span className="buttons">
-            <button type="button" className="w98-button close" tabIndex={-1} aria-label="닫기" disabled={!enabled} onClick={() => onCommand(2, 'click')} />
+            <button type="button" className="w98-button close" tabIndex={-1} aria-label="닫기" disabled={!enabled} onPointerDown={(e) => e.stopPropagation()} onClick={() => onCommand(2, 'click')} />
           </span>
         )}
       </div>

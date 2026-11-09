@@ -59,6 +59,8 @@ export interface Panes {
   readonly giveUp: number;
 }
 
+const CLOSE_CONFIRM = '게임을 끝내고 바탕 화면으로 돌아갈까요? 저장하지 않은 진행은 사라질 수 있습니다.';
+
 /** #play: 가상 화면 안의 원작 프레임. 타이틀(장면 1: FALCOM.AVI·오프닝·메뉴) → 월드 장면(장면 3) → 전투(4)·결과 창(5) → 월드 */
 export function Play() {
   const [original, setOriginal] = useState<Original | null>(null);
@@ -161,6 +163,10 @@ export function Play() {
   const modal = optionDialog !== null || savingGameData || leavingWorld || wizard; // 마법사(원본 파일…)가 열린 동안도 전투·월드를 멈춘다(제거 중 자동 저장 막기)
   // 월드 → 타이틀(0x451bbb(1)): 시나리오면 게임 데이터를 저장할지 묻는다
   const leaveWorld = () => (titlePrompt('world', world?.scenario !== undefined) ? setLeavingWorld(true) : setWorld(null));
+  // 프레임 닫기 단추: 게임을 끝내고 바탕화면으로. 다시 열어 음악·타이머·상태를 모두 처음으로(언어 바꾸기와 같음). 타이틀은 프레임을 가려 누를 수 없다
+  const closeGame = () => {
+    if (!modal && window.confirm(CLOSE_CONFIRM)) location.reload(); // 모달 대화 상자가 프레임을 끈다
+  };
   const command = (id: number) => {
     if (modal) return; // 모달 대화 상자가 프레임을 끈다
     chrome.sound.call(['ui', 1]); // 메뉴 명령은 거의 모두 효과음 1(0x44e437)
@@ -184,7 +190,7 @@ export function Play() {
       {(screen) => quit ? <div style={{ position: 'absolute', inset: 0, background: '#000' }} /> : (
         <>
         {launched ? (
-        <FrameWindow title={frameTitle(original.exe, ctx)} icon={chrome.icon} menu={chrome.menu} flags={flags} onCommand={command} screen={screen} metrics={WIN98}>
+        <FrameWindow title={frameTitle(original.exe, ctx)} icon={chrome.icon} menu={chrome.menu} flags={flags} onCommand={command} onClose={closeGame} screen={screen} metrics={WIN98}>
           {(client) =>
             setup ? (
               <BattleWindow

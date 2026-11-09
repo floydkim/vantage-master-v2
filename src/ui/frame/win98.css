@@ -249,6 +249,9 @@ body:has(.battle-backdrop) .w98-window:not(.w98-dialog) > .w98-caption {
 .w98-dialog {
   z-index: 200;
 }
+.w98-dialog > .w98-caption {
+  touch-action: none; /* 제목 표시줄 터치는 스크롤 대신 끌기 */
+}
 .w98-dialog-client {
   position: relative;
 }
