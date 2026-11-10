@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 import { expect, it } from 'vitest';
+import { byteKey } from '../../src/i18n/ko.ts';
 import { apply } from '../../src/engine/apply.ts';
 import { startFreeBattle } from '../../src/engine/battleStart.ts';
 import { type Cell, type Command, RETURN } from '../../src/engine/command.ts';
@@ -374,7 +375,7 @@ it('상태 줄 문구', () => {
   const s1 = startInput(turn);
   const s2 = press(data, s1, ...pixelOf(turn.state, map, unitOf(turn.state, turn.actor))).session;
   const s3 = press(data, s2, ...pixelOf(turn.state, map, unitOf(turn.state, turn.actor))).session;
-  expect([text(s1), text(s2), text(s3)]).toEqual([null, 'Indicating movable range.', 'Choose your action.']);
+  expect([text(s1), text(s2), text(s3)].map((t) => t && byteKey(t))).toEqual([null, 'db10596ff950c4ce', '03490977b807196a']); // 이동 범위 안내, 행동 고르기(원작 문장은 해시로)
 });
 
 it('세션 함수는 원작 UI가 줄 수 없는 입력을 거부한다', () => {

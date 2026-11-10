@@ -76,7 +76,7 @@ const CPU_PAUSE_MS = 300; // ponytail: CPU 생각 시간 대신 쉬기
 const UNIT_MENU_LABELS = 0x46005c; // 유닛 메뉴 이름 10개(0x41a88e)
 const MENU_GAP = 32; // 메뉴 창은 커서 x − 폭/2, 커서 y + 32(0x419de1)
 const DETAIL_INFO = 4;
-const SAVE_QUESTION = 0x45e3c8; // "Do you wish to save the continue data?"
+const SAVE_QUESTION = 0x45e3c8; // 컨티뉴 데이터를 저장할지 묻는 글
 const SURRENDER = 3021; // 대화 상자 0x84 Surrender
 const CHOOSE_ACTION = 0x45e574; // "Choose your action." 명령 메뉴 팝업이 대화 상자가 닫히면(1000) 도움말에(0x403c7c)
 const MAGIC_HELP = 0x462314; // 마법 설명 표[행동](0x424fd5): 10~15만 마법 설명
@@ -93,7 +93,7 @@ type Info = NatialDialog | MagicDialog | MasterDialog;
 /** 대화 상자 쌓임: 맨 뒤가 맨 안쪽(켜진 것), 앞의 것은 자식을 붙여 꺼져 있다(0x41b878) */
 type Dialog = Info | { readonly kind: 'mp' } | { readonly kind: 'confirm' } | { readonly kind: 'close' } | { readonly kind: 'giveup' } | { readonly kind: 'abort' } | { readonly kind: 'abandon' } | { readonly kind: 'slots' } | { readonly kind: 'writeError' };
 const TEMPLATE: Record<Dialog['kind'], number> = { summon: 0x6f, magic: 0x70, mp: 0x73, confirm: 0x74, natial: 0x7f, master: 0x80, summonList: 0x81, magicList: 0x82, close: 0x84, giveup: -1, abort: -2, writeError: -3, abandon: -4, slots: 0x76 };
-const ABORT_QUESTION = 0x45e3f0; // "Unable to save continue data.\nDo you wish to abort the battle?" (0x401bd8, 저장할 수 없을 때)
+const ABORT_QUESTION = 0x45e3f0; // 컨티뉴 데이터를 저장할 수 없으니 전투를 그만둘지 묻는 글 (0x401bd8, 저장할 수 없을 때)
 const WRITE_FAILED = 0x474254; // "Writing failed." (0x44ea4c, 제목 "Error" 0x4758cc, MB_OK)
 const ERROR_TITLE = 0x4758cc;
 const SURRENDER_QUESTION = 0x45e430; // "Is it okay to surrender?" (0x401d5b → MessageBox 0x42e7f7, 제목 0x472680, MB_YESNO)
@@ -797,7 +797,7 @@ export function BattleWindow({
   })();
   const popupHidden = stack.some((d) => !centered(d.kind));
   // 전장 창 닫기·Turn to Title(0x401bd8): 저장할 수 있으면(0x407823: 사람 입력 세션, 걷기·연출 중이 아님) 대화 상자 0x84(Save·Surrender·Cancel),
-  // 아니면 "Unable to save…abort the battle?"(예/아니오)
+  // 아니면 ABORT_QUESTION(예/아니오)
   const canSave = () => session !== null && !walking && !over.current;
   const askClose = () => !dialog && setStack([{ kind: canSave() ? 'close' : 'abort' }]);
   // 전투를 끝내고 나간다(0x401bd8 정리: 자동 저장 SV080을 지운다)

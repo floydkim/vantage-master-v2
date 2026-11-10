@@ -13,7 +13,7 @@ export interface BattleTally {
 export const tallyOf = (state: GameState): BattleTally => ({ elapsed: state.elapsedMinutes, stones: state.sideStates[0].mpMultiplier - 2, stats: state.stats[0] });
 
 /**
- * 타이틀로 갈 때 묻기. 월드(vmv2.exe 0x00451bbb(1))는 시나리오면(+0x8) 0x42e92b(대화 상자 0x84 "Do you wish to save the game data?"),
+ * 타이틀로 갈 때 묻기. 월드(vmv2.exe 0x00451bbb(1))는 시나리오면(+0x8) 0x42e92b(대화 상자 0x84, 게임 데이터 저장 질문),
  * 결과 창(0x00407ff9(1))은 시나리오면 0x42e7f7(예/아니오 "Do you wish to abbandon the game?"). 프리는 묻지 않는다
  */
 export function titlePrompt(from: 'world' | 'result', scenario: boolean): 'saveGameData' | 'abandon' | null {

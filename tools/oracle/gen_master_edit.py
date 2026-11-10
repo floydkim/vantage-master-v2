@@ -7,6 +7,7 @@
 - paint 단계: 초상 StretchBlt(대상·원본 사각형, 둘째 SRCPAINT 원본 = 0x10 → 0인 48 × 72 그림 CRC)
 - position: GetCursorPos·GetWindowRect·GetSystemMetrics 대역 → 편집(0x42c4d6)·이름 입력(0x42c2a6)의 SetWindowPos 자리
 """
+import hashlib
 import os
 import struct
 import sys
@@ -235,7 +236,7 @@ def run_session(s: Session, actions: list) -> list:
         e = s.edit()
         n = s.latest(0x86)
         name_open = n is not None and e is not None and vm.u32(vm.u32(DLG) + 0x20) != 0
-        step = {'sounds': list(vm.sounds), 'help': cstr(vm, HELP, 400).decode('latin1'), 'edit': e, 'records': [s.record(0), s.record(1)], 'loads': list(s.loads)}
+        step = {'sounds': list(vm.sounds), 'help': hashlib.sha256(cstr(vm, HELP, 400)).hexdigest()[:16], 'edit': e, 'records': [s.record(0), s.record(1)], 'loads': list(s.loads)}
         if e is not None:
             c = s.dialogs[d]['ctrls']
             step['texts'] = {str(k): v['text'] for k, v in sorted(c.items()) if v['text']}

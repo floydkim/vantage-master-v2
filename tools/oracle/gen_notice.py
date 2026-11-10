@@ -19,7 +19,8 @@ CREATE = 0x42E090
 DRAW = 0x42E38F
 NOTICE = 0x483F54
 COUNTER = 0x503DEC
-TEXTS = [b'Water level has returned.', b'You have come to a confrontation.', b'Estana has\xa1\xa1Woned', b'Algiros has\xa1\xa1Losted',
+# 원작 글은 exe 주소로 적는다(물높이 알림, 무승부 글): 공개 저장소에 원작 문장을 두지 않는다
+TEXTS = [0x45E558, 0x45E468, b'Estana has\xa1\xa1Woned', b'Algiros has\xa1\xa1Losted',
          b'Estana has surrendered', b'A', b'AB', b'ABCDEFGHIJKLMNOPQRS has surrendered']
 
 
@@ -49,7 +50,8 @@ def main() -> None:
     stub('CreateWindowExA', 12, create)
     buf = vm._bump('heap', 256)
     cases = []
-    for text in TEXTS:
+    for t in TEXTS:
+        text = vm.read(t, 256).split(b'\0')[0] if isinstance(t, int) else t
         vm.write(buf, text + b'\0')
         made.clear()
         vm.call(CREATE, buf, limit=200_000_000)
@@ -58,7 +60,7 @@ def main() -> None:
         at, w, h, _ = vm.dibs[[k for k in vm.dibs if k not in before][-1]]
         img = vm.read(at, w * abs(h))
         window = made[-1]
-        cases.append({'args': {'text': text.hex()}, 'expected': {'x': window['x'], 'y': window['y'], 'w': window['w'], 'h': window['h'],
+        cases.append({'args': {'address': f'{t:#x}'} if isinstance(t, int) else {'text': text.hex()}, 'expected': {'x': window['x'], 'y': window['y'], 'w': window['w'], 'h': window['h'],
                                                                  'counter': vm.u32(COUNTER), 'rows': [zlib.crc32(img[r * w:(r + 1) * w]) for r in range(abs(h))]}})
         print(text, window, flush=True)
         vm.set_u32(NOTICE, 0)  # 원작은 대기(0x42e186) 끝에서 창을 없애고 0

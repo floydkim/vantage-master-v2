@@ -234,7 +234,7 @@ export interface BattleEnd {
 }
 
 /**
- * vmv2.exe 0x00401ec3·0x00402020: 무승부(−1)는 "You have come to a confrontation.". 아니면 이름을 쓸 진영 = 승자가 사람이면 승자, 아니고 진 쪽이
+ * vmv2.exe 0x00401ec3·0x00402020: 무승부(−1)는 무승부 글(0x45e468). 아니면 이름을 쓸 진영 = 승자가 사람이면 승자, 아니고 진 쪽이
  * 사람이면 진 쪽, 둘 다 CPU면 승자이고 "<이름> has　<Won|Lost>ed"(원작 철자). 항복은 "<항복 진영> has surrendered", 이김은 항복 진영이 사람이고 다른 진영이
  * 사람이 아닐 때만 거짓
  */

@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import { readDialog } from '../../src/formats/dialogs.ts';
+import { uiKey } from '../../src/i18n/ko.ts';
 import { editText } from '../../src/ui/frame/DialogBox.tsx';
 import { exe } from './screenCases.ts';
 
@@ -9,7 +10,7 @@ it('원작 대화 상자 글자', () => {
   expect(readDialog(exe, 0x73).title).toBe('Report');
   expect(texts(0x73)).toEqual(['OK', 'Not enough MP']);
   expect(readDialog(exe, 0x74).title).toBe('Confirm');
-  expect(texts(0x74)).toEqual(['OK', 'Cancel', 'Is is okay to erase the Natial?']);
+  expect(texts(0x74).map((t, i) => (i === 2 ? uiKey(t ?? '') : t))).toEqual(['OK', 'Cancel', 'e8858c390ca4ec63']); // 셋째는 네이티얼을 지울지 묻는 글(원작 문장은 해시로)
   const magic = readDialog(exe, 0x70);
   expect([magic.title, magic.w, magic.h]).toEqual(['Magic', 134, 189]);
   expect(magic.controls[0]).toEqual({ id: 0x57a, style: 0x50a30101, className: 0x83, text: null, x: 5, y: 5, w: 60, h: 53 });

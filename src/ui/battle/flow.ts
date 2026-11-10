@@ -42,7 +42,7 @@ export interface FlowHooks {
   notice?(text: string, then: () => void): void;
 }
 
-const WATER_RETURNED = 0x45e558; // "Water level has returned." 
+const WATER_RETURNED = 0x45e558; // 물높이가 돌아왔다는 알림 
 
 /** 걸은 뒤 명령 연출과 차례 흐름. received는 CPU(받은 명령 0x4067b1), 아니면 사람 확정(0x406d13 바로). before는 명령 전 상태 */
 export function runCommand(stage: Stage, data: EngineData, before: GameState, actor: number, command: Command, received: boolean, trace: readonly StrikeRecord[], steps: readonly TurnStep[], hooks: FlowHooks): void {

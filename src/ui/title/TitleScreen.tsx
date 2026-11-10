@@ -21,8 +21,8 @@ import { aviOrigin, glintFrame, loadTitleArt, TITLE_H, TITLE_W, titleAction, tit
 
 const CONFIRM_TITLE = 0x472680;
 const ERROR_TITLE = 0x4758cc;
-const TRACE_QUESTION = 0x474264; // "Found trace of system closed \nduring battle.\nDo you wish to play this battle again?" (0x441fd3)
-const FOUND_QUESTION = 0x465d70; // "Continue data found.\nThe continue data is erased when loaded.\nDo you wish to load the continue data?" (0x426a3a)
+const TRACE_QUESTION = 0x474264; // 전투 도중 꺼진 흔적이 있으니 그 전투를 다시 할지 묻는 글 (0x441fd3)
+const FOUND_QUESTION = 0x465d70; // 컨티뉴 데이터가 있고 읽으면 지워진다며 읽을지 묻는 글 (0x426a3a)
 const READ_FAILED = 0x474244; // "Reading failed." (0x441cb3)
 const LOAD_FAILED = 0x4742b8; // "Loading failed." (0x441fd3)
 

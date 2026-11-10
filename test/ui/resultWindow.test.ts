@@ -5,6 +5,7 @@ import { decodeState } from '../../src/engine/state.ts';
 import { readMasterTable } from '../../src/formats/masterTable.ts';
 import { dibColors, resultPalette } from '../../src/ui/battle/palette.ts';
 import { battleEndText, drawResultButtons, drawResultPage, loadResultArt, RESULT_W, resultHit } from '../../src/ui/battle/resultWindow.ts';
+import { byteKey } from '../../src/i18n/ko.ts';
 import { inflateBlock, readGolden } from '../engine/block.ts';
 import { exe, read } from './screenCases.ts';
 
@@ -77,7 +78,8 @@ describe('결과 창', () => {
     expect(battleEndText(exe, as(0, 1), 1)).toEqual({ text: `${a} has\xa1\xa1Losted`, won: false });
     expect(battleEndText(exe, as(1, 1), 1)).toEqual({ text: `${b} has\xa1\xa1Woned`, won: true });
     expect(battleEndText(exe, as(0, 0), 1)).toEqual({ text: `${b} has\xa1\xa1Woned`, won: true });
-    expect(battleEndText(exe, as(0, 1), -1)).toEqual({ text: 'You have come to a confrontation.', won: false });
+    const draw = battleEndText(exe, as(0, 1), -1);
+    expect({ ...draw, text: byteKey(draw.text) }).toEqual({ text: 'f3d3d809ffafb88f', won: false }); // 무승부 글(원작 문장은 해시로)
     expect(battleEndText(exe, as(0, 1), 1, 0)).toEqual({ text: `${a} has surrendered`, won: false });
     expect(battleEndText(exe, as(0, 0), 1, 0)).toEqual({ text: `${a} has surrendered`, won: true });
   });

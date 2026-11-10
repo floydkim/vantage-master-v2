@@ -15,7 +15,7 @@ import type { Sound } from './sound.ts';
 
 const LIST = 0x834;
 const LEAVE = 0x84; // Save·Cancel·Surrender(3021), 글 3022
-const SAVE_QUESTION = 0x475cdc; // "Do you wish to save the game data?"
+const SAVE_QUESTION = 0x475cdc; // 게임 데이터를 저장할지 묻는 글
 const ERROR_TITLE = 0x4758cc;
 const WRITE_FAILED = 0x474234; // "Writing failed."
 export const READ_FAILED = 0x474224; // "Reading failed."

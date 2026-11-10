@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { byteKey } from '../../src/i18n/ko.ts';
 import { startFreeBattle } from '../../src/engine/battleStart.ts';
 import { GRID, partByte, workGrid } from '../../src/engine/rules/terrain.ts';
 import { unitOf } from '../../src/engine/state.ts';
@@ -39,7 +40,7 @@ it('시나리오의 진영 1 마스터 설명은 맵 MAS의 글(0x42d2e9 → 0x4
   const data = engineData(map);
   const state = startFreeBattle({ masters: readMasterTable(exe), oa: data.oa, names: readFreeModeNames(exe) }, map);
   const scenario = { ...texts, enemyMaster: masDescription(read(map.header.enemyMasterId)) };
-  expect(scenario.enemyMaster.startsWith(' <Rami-Ruth> \nA guardian warrior of law.')).toBe(true);
+  expect(byteKey(scenario.enemyMaster.split('\n').slice(0, 2).join('\n'))).toBe('f2eb741990144905'); // 라미루스 이름 줄과 첫 설명 줄(원작 문장은 해시로)
   const enemy = unitOf(state, 1);
   expect(enemy.side).toBe(1);
   const s = startInput({ state, actor: 0 });

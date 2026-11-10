@@ -23,6 +23,7 @@ import {
   useStandardName,
 } from '../../src/ui/world/masterEdit.ts';
 import { loadWorldArt, mapDescription, MASTER_INFO_W, masterEditPortrait, masterInfoImage } from '../../src/ui/world/worldArt.ts';
+import { byteKey } from '../../src/i18n/ko.ts';
 import { readGolden } from '../engine/block.ts';
 import { exe, mapOf, read } from './screenCases.ts';
 
@@ -151,7 +152,7 @@ function replay(c: Case, sides: [SideRecord, SideRecord]): string[] {
     }
     const label = `${i} ${JSON.stringify(a)}`;
     const e = edit as MasterEdit | null;
-    const ours: Record<string, unknown> = { sounds, help, open: e !== null, records: sides.map(recordView) };
+    const ours: Record<string, unknown> = { sounds, help: byteKey(help), open: e !== null, records: sides.map(recordView) };
     const theirs: Record<string, unknown> = { sounds: want.sounds, help: want.help, open: want.edit !== null, records: want.records.map(({ name, standardName, attackAction, master, level, stats }) => ({ name, standardName, attackAction, master, level, stats })) };
     if (e && want.edit) {
       ours.edit = { name: e.name, standardName: e.standardName, attackAction: e.attackAction, master: e.master };
